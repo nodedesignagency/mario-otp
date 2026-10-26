@@ -17,9 +17,23 @@ Glows and type look nicer in the app itself.*
 
 ## Run it
 
-1. Open `MarioOTP.xcodeproj` in **Xcode 16 or newer**.
-2. Pick an iPhone simulator and press **Run**. Requires iOS 17+.
-3. The demo code is shown at the top of the screen (starts as `1985`). Type it, or type something wrong first to see the red path.
+You'll need **Xcode 16 or newer**. The app targets iOS 17+.
+
+```sh
+# first time
+cd ~ && git clone https://github.com/nodedesignagency/mario-otp.git
+cd ~/mario-otp && git checkout claude/wonderful-rubin-h46qhn && ./scripts/run.sh
+
+# after that, to get the latest changes
+cd ~/mario-otp && git fetch origin && git checkout claude/wonderful-rubin-h46qhn && git pull && ./scripts/run.sh
+```
+
+`scripts/run.sh` builds the app, boots a simulator and launches it. It uses the simulator that's already
+open, or the newest iPhone Pro. Pass a name to choose: `./scripts/run.sh "iPhone 16"`.
+You can also open `MarioOTP.xcodeproj` in Xcode and press **Run**.
+
+The demo code is shown at the top of the screen (starts as `1985`). Type it, or type something wrong
+first to see the red path.
 
 To run on a device, choose your team under *Signing & Capabilities*.
 Sounds follow the silent switch. Use the speaker button in the HUD to mute them.
