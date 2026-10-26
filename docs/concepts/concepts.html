@@ -1,0 +1,193 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face { font-family: Pixelify; src: url("assets/PixelifySans[wght].ttf"); font-weight: 400 700; }
+@font-face { font-family: Silk; src: url("assets/Silkscreen-Regular.ttf"); }
+@font-face { font-family: SilkB; src: url("assets/Silkscreen-Bold.ttf"); }
+@font-face { font-family: PS2P; src: url("assets/PressStart2P-Regular.ttf"); }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #f2f1ee; font-family: "Liberation Sans", system-ui, sans-serif; padding: 36px 40px 44px; width: 1399px; }
+.row { display: flex; gap: 40px; }
+.col { width: 393px; }
+.label { font-family: SilkB; font-size: 15px; color: #1a1a1a; letter-spacing: 1px; margin-bottom: 4px; }
+.label b { color: #e4281e; }
+.desc { font-size: 13px; color: #555; line-height: 1.4; height: 38px; margin-bottom: 12px; }
+.phone { position: relative; width: 393px; height: 852px; border-radius: 54px; overflow: hidden; box-shadow: 0 0 0 10px #111, 0 0 0 11px #444, 0 30px 60px rgba(0,0,0,.25); }
+.pix { image-rendering: pixelated; }
+.status { position: absolute; top: 18px; left: 0; right: 0; display: flex; justify-content: space-between; padding: 0 34px 0 44px; font-weight: 700; font-size: 16px; color: #fff; z-index: 5; }
+.island { position: absolute; top: 11px; left: 50%; transform: translateX(-50%); width: 124px; height: 36px; border-radius: 20px; background: #000; z-index: 6; }
+.abs { position: absolute; }
+.sprite { position: absolute; image-rendering: pixelated; }
+
+/* ---------- A: Glass World ---------- */
+.a .world { position: absolute; inset: 0; background: url(assets/world_a.png) 0 0 / 393px 852px; image-rendering: pixelated; }
+.glass { background: linear-gradient(160deg, rgba(255,255,255,.30), rgba(255,255,255,.08) 55%, rgba(255,255,255,.14));
+  backdrop-filter: blur(16px) saturate(180%); -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255,255,255,.45); box-shadow: inset 1px 1px 0 rgba(255,255,255,.6), inset -1px -1px 0 rgba(255,255,255,.12), 0 8px 24px rgba(30,10,50,.28); }
+.a .hud { left: 16px; right: 70px; top: 64px; height: 50px; border-radius: 25px; display: flex; justify-content: space-around; align-items: center; color: #fff; }
+.a .stat { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.a .lbl { font-family: Silk; font-size: 9px; letter-spacing: 1.5px; opacity: .75; }
+.a .val { font-family: SilkB; font-size: 15px; display: flex; align-items: center; gap: 4px; text-shadow: 1px 1px 0 rgba(60,20,80,.5); }
+.a .mute { right: 16px; top: 64px; width: 50px; height: 50px; border-radius: 25px; display: grid; place-items: center; }
+.a .hint { left: 50%; transform: translateX(-50%); top: 126px; height: 32px; padding: 0 14px; border-radius: 16px; display: flex; align-items: center; gap: 8px; color: #fff; font-size: 13px; white-space: nowrap; }
+.a .hint b { font-family: SilkB; color: #ffd23f; letter-spacing: 2px; font-size: 14px; text-shadow: 1px 1px 0 rgba(90,40,0,.6); }
+.a .sheet { left: 8px; right: 8px; top: 388px; bottom: 8px; border-radius: 46px;
+  background: linear-gradient(180deg, rgba(58,26,90,.30), rgba(30,12,52,.52));
+  backdrop-filter: blur(26px) saturate(170%); -webkit-backdrop-filter: blur(26px) saturate(170%);
+  border: 1px solid rgba(255,255,255,.40); box-shadow: inset 1.5px 1.5px 0 rgba(255,255,255,.55), inset 0 -20px 40px rgba(255,140,200,.06), 0 -6px 40px rgba(20,0,40,.35); }
+.grabber { position: absolute; top: 9px; left: 50%; transform: translateX(-50%); width: 38px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.4); }
+.a h1 { position: absolute; top: 30px; width: 100%; text-align: center; font-family: Pixelify; font-weight: 700; font-size: 27px; color: #fff; text-shadow: 2px 2px 0 rgba(70,20,90,.65); }
+.a p.sub { position: absolute; top: 70px; width: 100%; text-align: center; font-size: 14px; line-height: 1.45; color: rgba(255,255,255,.72); }
+.tile { position: absolute; width: 62px; height: 62px; border-radius: 18px; display: grid; place-items: center; }
+.a .tile { background: linear-gradient(160deg, rgba(255,255,255,.26), rgba(255,255,255,.06)); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,.45);
+  box-shadow: inset 1px 1px 0 rgba(255,255,255,.65), 0 6px 16px rgba(20,0,40,.25); font-family: Pixelify; font-weight: 700; font-size: 32px; color: #fff; text-shadow: 2px 2px 0 rgba(40,10,60,.45); }
+.a .tile.ok { background: linear-gradient(160deg, rgba(120,255,170,.50), rgba(40,200,110,.22)); border-color: rgba(190,255,215,.95); box-shadow: inset 1px 1px 0 rgba(255,255,255,.7), 0 0 26px rgba(61,224,120,.75), 0 6px 16px rgba(0,40,20,.3); }
+.a .tile.hit { background: linear-gradient(160deg, rgba(255,255,255,.75), rgba(190,255,215,.45)); border-color: #fff; box-shadow: 0 0 30px rgba(255,255,255,.7), 0 0 26px rgba(61,224,120,.6); }
+.a .tile.bad { background: linear-gradient(160deg, rgba(255,140,150,.50), rgba(230,50,70,.25)); border-color: rgba(255,190,195,.95); box-shadow: inset 1px 1px 0 rgba(255,255,255,.6), 0 0 26px rgba(255,77,77,.7), 0 6px 16px rgba(40,0,10,.3); }
+.a .tile.wait { border-color: rgba(255,214,120,.95); box-shadow: inset 1px 1px 0 rgba(255,255,255,.6), 0 0 22px rgba(255,180,60,.6); }
+.a .ledge { position: absolute; left: 0; right: 0; height: 16px; background: url(assets/brick.png) 0 0 / 16px 16px; image-rendering: pixelated; opacity: .9;
+  -webkit-mask: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); }
+.a .footer { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); height: 36px; padding: 0 16px; border-radius: 18px; display: flex; align-items: center; gap: 6px; font-size: 13.5px; color: rgba(255,255,255,.7); white-space: nowrap; }
+.a .footer b { color: #fff; font-family: SilkB; font-size: 12px; letter-spacing: .5px; }
+
+/* ---------- B: Pocket Console ---------- */
+.b { background: radial-gradient(120% 80% at 20% 0%, #9c86ec 0%, #7a5fd8 40%, #5d42bb 100%); }
+.b .pcb { position: absolute; inset: 0; opacity: .16; }
+.b .shine { position: absolute; inset: 0; background: linear-gradient(115deg, rgba(255,255,255,.35) 0%, rgba(255,255,255,0) 22%, rgba(255,255,255,0) 70%, rgba(255,255,255,.12) 85%, rgba(255,255,255,0) 100%); }
+.b .bezel { position: absolute; left: 22px; right: 22px; top: 64px; height: 404px; background: linear-gradient(180deg, #3a3650, #2a273a); border-radius: 14px 14px 52px 14px; box-shadow: inset 0 2px 0 rgba(255,255,255,.12), 0 3px 0 rgba(0,0,0,.25); }
+.b .bezel .lines { position: absolute; top: 14px; left: 18px; right: 18px; height: 3px; border-top: 2px solid #c2185b; border-bottom: 2px solid #3f51b5; }
+.b .bezel .tag { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: #2f2c41; padding: 0 8px; font-family: Silk; font-size: 9px; color: #cfc8ee; letter-spacing: 1.5px; }
+.b .led { position: absolute; left: 14px; top: 160px; width: 10px; height: 10px; border-radius: 5px; background: #ff3b30; box-shadow: 0 0 10px #ff3b30, 0 0 3px #fff inset; }
+.b .ledlbl { position: absolute; left: 8px; top: 176px; font-family: Silk; font-size: 7px; color: #9b94bf; }
+.b .lcd { position: absolute; left: 34px; right: 34px; top: 38px; bottom: 30px; border-radius: 6px; background: #9bbc0f; overflow: hidden;
+  box-shadow: inset 0 3px 8px rgba(15,56,15,.55); }
+.b .lcd::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(0deg, rgba(15,56,15,.07) 0 1px, transparent 1px 3px), repeating-linear-gradient(90deg, rgba(15,56,15,.07) 0 1px, transparent 1px 3px); }
+.b .lcdtxt { position: absolute; width: 100%; text-align: center; font-family: PS2P; color: #0f380f; }
+.b .btile { position: absolute; width: 46px; height: 46px; border: 4px solid #0f380f; background: #8bac0f; display: grid; place-items: center; font-family: PS2P; font-size: 16px; color: #0f380f; }
+.b .btile.ok { background: #0f380f; color: #9bbc0f; }
+.b .btile.wait { border-style: dashed; }
+.b .brand { position: absolute; top: 482px; left: 30px; font-family: Pixelify; font-weight: 700; font-style: italic; font-size: 22px; color: #2b1d6b; text-shadow: 0 1px 0 rgba(255,255,255,.35); }
+.b .brand span { font-family: Silk; font-style: normal; font-size: 11px; letter-spacing: 2px; color: #e9e3ff; margin-left: 6px; }
+.b .keys { position: absolute; left: 46px; right: 46px; top: 528px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 30px; }
+.b .key { height: 52px; border-radius: 26px; background: radial-gradient(60% 60% at 35% 30%, #f06292, #c2185b 60%, #8e0e44); box-shadow: 0 4px 0 #5b0a2e, 0 6px 10px rgba(40,0,30,.35), inset 0 2px 1px rgba(255,255,255,.35);
+  display: grid; place-items: center; font-family: Pixelify; font-weight: 700; font-size: 24px; color: #fff; text-shadow: 0 1px 0 rgba(0,0,0,.3); }
+.b .key.pressed { transform: translateY(3px); box-shadow: 0 1px 0 #5b0a2e, 0 2px 4px rgba(40,0,30,.35), inset 0 2px 1px rgba(255,255,255,.25); }
+.b .key.ghost { background: none; box-shadow: none; }
+.b .pills { position: absolute; bottom: 40px; left: 0; right: 0; display: flex; justify-content: center; gap: 28px; }
+.b .pill { display: flex; flex-direction: column; align-items: center; gap: 6px; font-family: Silk; font-size: 9px; letter-spacing: 1.5px; color: #2b1d6b; }
+.b .pill i { width: 46px; height: 12px; border-radius: 6px; background: linear-gradient(#7e78a0, #5c5680); box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 2px 0 rgba(0,0,0,.2); transform: rotate(-20deg); }
+.b .speaker { position: absolute; right: 26px; bottom: 26px; display: flex; gap: 7px; transform: rotate(-28deg); }
+.b .speaker i { width: 6px; height: 46px; border-radius: 3px; background: rgba(40,20,90,.45); box-shadow: inset 0 2px 2px rgba(0,0,0,.35); }
+
+/* ---------- C: Neon Arcade ---------- */
+.c .world { position: absolute; inset: 0; background: url(assets/world_c.png) 0 0 / 393px 852px; image-rendering: pixelated; }
+.c .crt { position: absolute; inset: 0; pointer-events: none; z-index: 4; background: repeating-linear-gradient(0deg, rgba(0,0,0,.22) 0 1px, transparent 1px 3px), radial-gradient(120% 90% at 50% 45%, transparent 55%, rgba(0,0,0,.65)); }
+.c .hud { position: absolute; top: 64px; left: 22px; right: 22px; display: flex; justify-content: space-between; font-family: PS2P; font-size: 10px; line-height: 1.8; color: #fff; }
+.c .hud .r { color: #ff3b6b; text-shadow: 0 0 8px rgba(255,59,107,.8); }
+.c .marquee { position: absolute; top: 150px; width: 100%; text-align: center; }
+.c .marquee .p1 { font-family: PS2P; font-size: 10px; color: #ff4fd8; letter-spacing: 2px; text-shadow: 0 0 10px #ff4fd8; }
+.c .marquee .t { margin-top: 14px; font-family: PS2P; font-size: 22px; line-height: 1.3; color: #9ff6ff; text-shadow: 0 0 6px #31e7ff, 0 0 18px #31e7ff, 3px 3px 0 #7a1fa0; }
+.c .sheet { position: absolute; left: 12px; right: 12px; top: 388px; bottom: 12px; border-radius: 30px;
+  background: linear-gradient(180deg, rgba(20,8,40,.55), rgba(8,4,20,.78)); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border: 1.5px solid transparent; background-clip: padding-box; box-shadow: 0 0 0 1.5px rgba(255,79,216,.75), 0 0 30px rgba(255,79,216,.35), inset 0 0 40px rgba(49,231,255,.08); }
+.c .tile { width: 60px; height: 60px; border-radius: 8px; background: rgba(10,4,24,.8); border: 2px solid #31e7ff; box-shadow: 0 0 12px rgba(49,231,255,.6), inset 0 0 10px rgba(49,231,255,.25); font-family: PS2P; font-size: 20px; color: #dffbff; text-shadow: 0 0 8px #31e7ff; }
+.c .tile.ok { border-color: #39ff88; box-shadow: 0 0 18px rgba(57,255,136,.8), inset 0 0 12px rgba(57,255,136,.35); color: #eafff1; text-shadow: 0 0 8px #39ff88; }
+.c .tile.bad { border-color: #ff3b6b; box-shadow: 0 0 18px rgba(255,59,107,.85), inset 0 0 12px rgba(255,59,107,.35); color: #ffe6ec; text-shadow: 0 0 8px #ff3b6b; }
+.c .ledge { position: absolute; left: 0; right: 0; height: 16px; background: url(assets/brick.png) 0 0 / 16px 16px; image-rendering: pixelated; opacity: .8; -webkit-mask: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); }
+.c .insert { position: absolute; bottom: 44px; width: 100%; text-align: center; font-family: PS2P; font-size: 9px; color: #ffd23f; letter-spacing: 1px; text-shadow: 0 0 8px rgba(255,210,63,.8); }
+.c .sub { position: absolute; top: 28px; width: 100%; text-align: center; font-size: 13.5px; color: rgba(220,210,255,.65); line-height: 1.45; }
+</style></head>
+<body>
+<div class="row">
+
+<!-- A -->
+<div class="col">
+  <div class="label"><b>A</b> · GLASS WORLD  (recommended)</div>
+  <div class="desc">Liquid Glass panels floating over a living pixel World 1-1. Retro lives in the art and type, modern lives in the material.</div>
+  <div class="phone a">
+    <div class="world"></div><div class="island"></div>
+    <div class="status"><span>9:41</span><span>􀙇 ▮</span></div>
+    <div class="abs hud glass">
+      <div class="stat"><span class="lbl">MARIO</span><span class="val">000400</span></div>
+      <div class="stat"><span class="lbl">COINS</span><span class="val"><img class="pix" src="assets/coin.png" width="9" height="13">×02</span></div>
+      <div class="stat"><span class="lbl">WORLD</span><span class="val">1-1</span></div>
+    </div>
+    <div class="abs mute glass"><svg width="20" height="18" viewBox="0 0 20 18"><path d="M2 6h4l5-4v14l-5-4H2z" fill="#fff"/><path d="M14 5c1.6 1.2 1.6 6.8 0 8M16.5 2.5c3 2.6 3 10.4 0 13" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></div>
+    <div class="abs hint glass"><img class="pix" src="assets/question.png" width="8" height="11"> Demo code <b>1985</b></div>
+    <div class="abs sheet">
+      <div class="grabber"></div>
+      <h1>Let’s verify your number</h1>
+      <p class="sub">We’ve sent a 4-digit code to your phone.<br>It’ll auto-verify once entered.</p>
+      <img class="sprite" src="assets/coin.png" style="left:73px; top:108px; width:16px; height:24px; opacity:.9">
+      <div class="tile ok" style="left:50px; top:144px;">1</div>
+      <div class="tile bad" style="left:122px; top:144px;">2</div>
+      <div class="tile hit" style="left:194px; top:134px;">8</div>
+      <div class="tile wait" style="left:266px; top:144px;">5</div>
+      <img class="sprite" src="assets/jump.png" style="left:174px; top:208px; width:48px; height:48px;">
+      <div class="ledge" style="top:306px;"></div>
+      <div class="footer glass">Didn’t receive the code? <b>RESEND 0:24</b></div>
+    </div>
+  </div>
+</div>
+
+<!-- B -->
+<div class="col">
+  <div class="label"><b>B</b> · POCKET CONSOLE</div>
+  <div class="desc">The phone becomes a translucent "atomic purple" handheld. 4-shade LCD up top, chunky rubber keys to type the code.</div>
+  <div class="phone b">
+    <svg class="pcb" viewBox="0 0 393 852"><g stroke="#1b0a50" stroke-width="2" fill="none"><path d="M0 520h80v60h120v-40h193"/><path d="M0 700h40v-50h90v90h140v-60h123"/><path d="M60 852v-90h60v-40"/><path d="M300 852v-120h-60v-70h153"/><circle cx="200" cy="580" r="5"/><circle cx="130" cy="740" r="5"/><circle cx="240" cy="662" r="5"/><path d="M20 480h353"/></g></svg>
+    <div class="shine"></div><div class="island"></div>
+    <div class="status" style="color:#2b1d6b"><span>9:41</span><span>▮</span></div>
+    <div class="bezel">
+      <div class="lines"></div><div class="tag">PIXEL·PASS  OTP EDITION</div>
+      <div class="led"></div><div class="ledlbl">BATTERY</div>
+      <div class="lcd">
+        <div class="lcdtxt" style="top:22px; font-size:8px;">MARIO 000400  ×02  1-1</div>
+        <div class="lcdtxt" style="top:58px; font-size:14px;">ENTER CODE</div>
+        <div class="lcdtxt" style="top:84px; font-size:7px; line-height:1.6;">SENT TO •••• 4821</div>
+        <img class="sprite" src="assets/coin_dmg.png" style="left:59px; top:108px; width:16px; height:24px;">
+        <div class="btile ok" style="left:44px; top:142px;">1</div>
+        <div class="btile" style="left:100px; top:134px;">9</div>
+        <div class="btile wait" style="left:156px; top:142px;">8</div>
+        <div class="btile wait" style="left:212px; top:142px;">5</div>
+        <img class="sprite" src="assets/jump_dmg.png" style="left:90px; top:194px; width:48px; height:48px;">
+        <div class="abs" style="left:0; right:0; top:290px; height:16px; background:url(assets/brick_dmg.png) 0 0/16px 16px; image-rendering:pixelated;"></div>
+      </div>
+    </div>
+    <div class="brand">Mario<span>OTP</span></div>
+    <div class="keys">
+      <div class="key">1</div><div class="key pressed">2</div><div class="key">3</div>
+      <div class="key">4</div><div class="key">5</div><div class="key">6</div>
+      <div class="key">7</div><div class="key">8</div><div class="key">9</div>
+      <div class="key ghost"></div><div class="key">0</div><div class="key" style="font-size:16px">◀</div>
+    </div>
+    <div class="pills"><div class="pill"><i></i>RESEND</div><div class="pill"><i></i>PASTE</div></div>
+    <div class="speaker"><i></i><i></i><i></i><i></i><i></i></div>
+  </div>
+</div>
+
+<!-- C -->
+<div class="col">
+  <div class="label"><b>C</b> · NEON ARCADE</div>
+  <div class="desc">Closest to what you have now: synthwave grid, CRT scanlines, arcade marquee type, smoked-glass sheet with neon edges.</div>
+  <div class="phone c">
+    <div class="world"></div><div class="island"></div>
+    <div class="status"><span>9:41</span><span>▮</span></div>
+    <div class="hud"><div><span class="r">1UP</span><br>000400</div><div style="text-align:center"><span class="r">HI-SCORE</span><br>012000</div><div style="text-align:right"><img class="pix" src="assets/coin.png" width="8" height="12"> ×02<br>1-1</div></div>
+    <div class="marquee"><div class="p1">— PLAYER 1 —</div><div class="t">ENTER<br>YOUR CODE</div></div>
+    <div class="sheet">
+      <p class="sub">We’ve sent a 4-digit code to your phone.<br>It’ll auto-verify once entered.</p>
+      <div class="tile ok abs" style="left:46px; top:110px; display:grid; place-items:center;">1</div>
+      <div class="tile bad abs" style="left:118px; top:104px; display:grid; place-items:center;">2</div>
+      <div class="tile abs" style="left:190px; top:110px; display:grid; place-items:center;">8</div>
+      <div class="tile abs" style="left:262px; top:110px; display:grid; place-items:center;">5</div>
+      <img class="sprite" src="assets/jump.png" style="left:112px; top:180px; width:48px; height:48px;">
+      <div class="ledge" style="top:290px;"></div>
+      <div class="insert">INSERT COIN TO RESEND · 24</div>
+    </div>
+    <div class="crt"></div>
+  </div>
+</div>
+
+</div>
+</body></html>
