@@ -55,10 +55,33 @@ private struct StageCanvas: View {
                     .zIndex(10 + block.zIndex)
             }
 
+            if let castle = scene.castle {
+                PixelSprite(image: SpriteImage.castle, size: StageLayout.castleSize)
+                    .opacity(castle.opacity)
+                    .position(castle.center)
+                    .zIndex(18)
+            }
+
             BrickRoad()
                 .frame(width: layout.width, height: StageLayout.groundHeight)
                 .position(x: layout.centerX, y: layout.groundY + StageLayout.groundHeight / 2)
                 .zIndex(19)
+
+            if let princess = scene.princess {
+                PixelSprite(image: princess.isStepping ? SpriteImage.princessStep : SpriteImage.princess,
+                            size: StageLayout.princessSize)
+                    .scaleEffect(x: princess.facing == .left ? -1 : 1, y: 1)
+                    .opacity(princess.opacity)
+                    .position(x: princess.x, y: layout.groundY - StageLayout.princessSize.height / 2)
+                    .zIndex(20)
+            }
+
+            if let heart = scene.heart {
+                PixelSprite(image: SpriteImage.heart, size: CGSize(width: 21, height: 21))
+                    .scaleEffect(heart.scale)
+                    .position(heart.center)
+                    .zIndex(22)
+            }
 
             if let pose = scene.mario {
                 PixelSprite(image: SpriteImage.mario(pose.frame),

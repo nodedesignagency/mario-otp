@@ -115,6 +115,8 @@ struct Choreography: Equatable {
         case merge
         case reveal
         case hop
+        case castle
+        case princess
         case reject
         case commit
     }
@@ -137,6 +139,8 @@ struct Choreography: Equatable {
     var cues: [TimedCue]
     var commitTime: Double
     var marioEnd: MarioSpot?
+    /// The ending after a verified code: castle, princess, heart.
+    var princess: PrincessEntrance?
     var reducedMotion: Bool
 
     var succeeds: Bool {
@@ -158,7 +162,7 @@ struct Choreography: Equatable {
 extension Choreography {
     static func make(layout: StageLayout, targets: [Target], mario spot: MarioSpot?, reducedMotion: Bool) -> Choreography {
         reducedMotion
-            ? still(targets: targets, spot: spot)
+            ? still(layout: layout, targets: targets, spot: spot)
             : animated(layout: layout, targets: targets, spot: spot)
     }
 
@@ -180,6 +184,7 @@ extension Choreography {
         }
 
         let outcome: Outcome
+        var princess: PrincessEntrance?
         if targets.allSatisfy(\.correct) {
             track.stand(for: 0.1)
             let mergeStart = track.time
@@ -194,6 +199,16 @@ extension Choreography {
             track.hop(height: 22, duration: 0.34)
             track.stand(for: 0.15)
             outcome = .verified(mergeStart: mergeStart, reveal: reveal)
+
+            // Thank you, Mario! A castle rises at the end of the road and the princess walks over.
+            let entrance = PrincessEntrance.walking(to: track.x, layout: layout,
+                                                    castleAt: reveal + 0.35, appearAt: track.time)
+            track.cue(.castle, at: entrance.castleAt)
+            track.stand(until: entrance.arriveAt - 0.3)
+            track.face(Facing(toward: entrance.toX, from: track.x))
+            track.stand(until: entrance.arriveAt + 0.25)
+            track.cue(.princess, at: entrance.arriveAt)
+            princess = entrance
         } else {
             track.stand(for: 0.08)
             let reject = track.time
@@ -210,12 +225,13 @@ extension Choreography {
             cues: track.cues.sorted { $0.time < $1.time },
             commitTime: track.time,
             marioEnd: MarioSpot(x: track.x, facing: track.facing),
+            princess: princess,
             reducedMotion: false
         )
     }
 
-    /// Reduce Motion: no Mario run, blocks simply light up one after another.
-    private static func still(targets: [Target], spot: MarioSpot?) -> Choreography {
+    /// Reduce Motion: no Mario run, keys simply light up one after another.
+    private static func still(layout: StageLayout, targets: [Target], spot: MarioSpot?) -> Choreography {
         var cues: [TimedCue] = []
         var hits: [Hit] = []
         var time = 0.2
@@ -226,12 +242,22 @@ extension Choreography {
         }
 
         let outcome: Outcome
+        var princess: PrincessEntrance?
         if targets.allSatisfy(\.correct) {
             let mergeStart = time + 0.1
             let reveal = mergeStart + mergeDuration + 0.05
             cues.append(TimedCue(time: mergeStart, cue: .merge))
             cues.append(TimedCue(time: reveal, cue: .reveal))
-            time = reveal + 0.5
+            // She simply appears beside Mario.
+            let marioX = (spot ?? layout.startSpot).x
+            let entrance = PrincessEntrance(castleAt: reveal, appearAt: reveal + 0.3,
+                                            fromX: marioX + PrincessEntrance.standOff,
+                                            toX: marioX + PrincessEntrance.standOff,
+                                            arriveAt: reveal + 0.3, castleX: layout.castleX)
+            cues.append(TimedCue(time: entrance.castleAt, cue: .castle))
+            cues.append(TimedCue(time: entrance.arriveAt, cue: .princess))
+            princess = entrance
+            time = entrance.arriveAt + 0.3
             outcome = .verified(mergeStart: mergeStart, reveal: reveal)
         } else {
             let reject = time + 0.05
@@ -243,7 +269,54 @@ extension Choreography {
 
         let moves = spot.map { [MarioMove(start: 0, duration: time, kind: .stand(x: $0.x, facing: $0.facing))] } ?? []
         return Choreography(moves: moves, hits: hits, outcome: outcome, cues: cues,
-                            commitTime: time, marioEnd: spot, reducedMotion: true)
+                            commitTime: time, marioEnd: spot, princess: princess, reducedMotion: true)
+    }
+}
+
+struct PrincessPose: Equatable {
+    var x: CGFloat
+    /// Alternates the two walking frames.
+    var isStepping: Bool
+    var facing: Facing
+    var opacity: Double
+}
+
+/// The princess walks out of a castle at the end of the road and stops beside Mario.
+/// She always comes from the right, so she always faces left, towards him.
+struct PrincessEntrance: Equatable {
+    static let walkSpeed: CGFloat = 85
+    static let strideLength: CGFloat = 7
+    /// How far to Mario's right she stops.
+    static let standOff: CGFloat = 46
+    static let castleRise = 0.45
+
+    var castleAt: Double
+    var appearAt: Double
+    var fromX: CGFloat
+    var toX: CGFloat
+    var arriveAt: Double
+    var castleX: CGFloat
+
+    static func walking(to marioX: CGFloat, layout: StageLayout, castleAt: Double, appearAt: Double) -> PrincessEntrance {
+        let door = layout.castleX
+        let stop = min(marioX + standOff, door - 20)
+        let walk = Double(abs(door - stop) / walkSpeed)
+        return PrincessEntrance(castleAt: castleAt, appearAt: appearAt, fromX: door, toX: stop,
+                                arriveAt: appearAt + walk, castleX: door)
+    }
+
+    func castleProgress(at t: Double) -> Double {
+        min(max((t - castleAt) / Self.castleRise, 0), 1)
+    }
+
+    func pose(at t: Double) -> PrincessPose? {
+        guard t >= appearAt else { return nil }
+        let walk = arriveAt - appearAt
+        let p = walk > 0 ? min((t - appearAt) / walk, 1) : 1
+        let x = fromX + (toX - fromX) * CGFloat(p)
+        let step = Int(abs(x - fromX) / Self.strideLength) % 2 == 1
+        return PrincessPose(x: x, isStepping: p < 1 && step, facing: .left,
+                            opacity: min((t - appearAt) / 0.18, 1))
     }
 }
 
@@ -271,6 +344,11 @@ private struct Track {
 
     mutating func stand(until t: Double) {
         stand(for: t - time)
+    }
+
+    /// Turns on the spot; takes effect from the next move.
+    mutating func face(_ direction: Facing) {
+        facing = direction
     }
 
     mutating func run(to target: CGFloat) {

@@ -16,32 +16,38 @@ struct VerifyScreen: View {
                 .padding(.horizontal, 20)
                 .padding(.top, 6)
 
-            HeadlineView(headline: model.headline)
-                .padding(.top, 24)
-                .padding(.horizontal, 24)
+            VStack(spacing: 0) {
+                HeadlineView(headline: model.headline)
+                    .padding(.top, 24)
+                    .padding(.horizontal, 24)
 
-            StageView(model: model, isFocused: fieldFocused)
-                .padding(.top, 10)
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    if model.acceptsInput { fieldFocused = true }
-                }
-                .accessibilityHidden(true)
+                StageView(model: model, isFocused: fieldFocused)
+                    .padding(.top, 10)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        if model.acceptsInput { fieldFocused = true }
+                    }
+                    .accessibilityHidden(true)
 
-            ZStack {
-                if !isVerified {
-                    FooterView(isChecking: model.phase == .checking,
-                               canResend: model.acceptsInput,
-                               resendAvailableAt: model.resendAvailableAt,
-                               demoCode: model.demoCode,
-                               onResend: { model.resend() })
-                        .transition(.opacity)
+                ZStack {
+                    if isVerified {
+                        PrincessDialog(startedAt: model.dialogStartedAt)
+                            .padding(.horizontal, 24)
+                            .transition(.opacity)
+                    } else {
+                        FooterView(isChecking: model.phase == .checking,
+                                   canResend: model.acceptsInput,
+                                   resendAvailableAt: model.resendAvailableAt,
+                                   demoCode: model.demoCode,
+                                   onResend: { model.resend() })
+                            .transition(.opacity)
+                    }
                 }
+                .padding(.top, isVerified ? 16 : 6)
+                .animation(.easeOut(duration: 0.25), value: isVerified)
             }
-            .padding(.top, 6)
-            .animation(.easeOut(duration: 0.25), value: isVerified)
-
-            Spacer(minLength: 0)
+            // Typing happens up top, clear of the keyboard; the ending settles into the middle.
+            .frame(maxHeight: .infinity, alignment: isVerified ? .center : .top)
         }
         .background { codeField }
         .background { PaperBackground().ignoresSafeArea() }

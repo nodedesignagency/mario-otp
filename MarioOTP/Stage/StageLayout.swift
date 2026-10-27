@@ -17,6 +17,9 @@ struct StageLayout: Equatable {
     static let groundHeight: CGFloat = 16
     static let height: CGFloat = topInset + blockSize + headroom + marioSize + groundHeight
     static let bubbleSize = CGSize(width: 196, height: 62)
+    /// Sprite sizes for the ending, at 3pt per pixel.
+    static let castleSize = CGSize(width: 24 * marioPixel, height: 20 * marioPixel)
+    static let princessSize = CGSize(width: 16 * marioPixel, height: 24 * marioPixel)
 
     var width: CGFloat
 
@@ -34,6 +37,9 @@ struct StageLayout: Equatable {
         let takeoff = blockCenterX(0) - Choreography.fistReach - jump.contactFraction * pitch
         return MarioSpot(x: max(Self.marioSize / 2 + 2, takeoff), facing: .right)
     }
+
+    /// The castle sits at the far end of the road; this is its door.
+    var castleX: CGFloat { width - Self.castleSize.width / 2 - 6 }
 
     func blockCenterX(_ slot: Int) -> CGFloat {
         centerX + (CGFloat(slot) - CGFloat(Self.slotCount - 1) / 2) * pitch

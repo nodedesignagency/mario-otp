@@ -21,7 +21,7 @@ enum Headline: Hashable {
         case .prompt: return "We sent a 4-digit code to •••• 4821.\nIt verifies on its own once entered."
         case .resent: return "A new 4-digit code is on its way.\nIt verifies on its own once entered."
         case .retry: return "Greens are right and stay locked.\nRetype the red ones."
-        case .verified: return "You’re in. Nice punching."
+        case .verified: return "You’re in."
         }
     }
 }
@@ -66,12 +66,15 @@ final class OTPFlowModel {
     private(set) var resendAvailableAt = Date().addingTimeInterval(OTPFlowModel.resendCooldown)
     /// The finale has finished moving, so the stage can stop redrawing every frame.
     private(set) var isStageSettled = false
+    /// When the princess started typing her line, once she's reached Mario.
+    private(set) var dialogStartedAt: Date?
 
     /// Reported by the stage once it knows its width.
     @ObservationIgnored var layout: StageLayout?
     @ObservationIgnored var reduceMotion = false
     private let feedback: Feedback
     @ObservationIgnored private var playback: Task<Void, Never>?
+    @ObservationIgnored private var typing: Task<Void, Never>?
 
     init() {
         feedback = Feedback()
@@ -153,6 +156,8 @@ final class OTPFlowModel {
         digits = Array(repeating: nil, count: Self.codeLength)
         locked = []
         speech = nil
+        dialogStartedAt = nil
+        typing?.cancel()
     }
 
     // MARK: - The run
@@ -203,10 +208,21 @@ final class OTPFlowModel {
             feedback.merge()
         case .reveal:
             feedback.reveal()
-            headline = .verified
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.9)) {
+                headline = .verified
+            }
             AccessibilityNotification.Announcement(headline.title).post()
         case .hop:
             feedback.hop()
+        case .castle:
+            feedback.castle()
+        case .princess:
+            feedback.heart()
+            withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) {
+                dialogStartedAt = Date()
+            }
+            typeOutPrincessLine()
+            AccessibilityNotification.Announcement(PrincessLine.full).post()
         case .reject:
             feedback.reject()
             headline = .retry
@@ -215,6 +231,18 @@ final class OTPFlowModel {
             AccessibilityNotification.Announcement(announcement).post()
         case .commit:
             commit(choreography)
+        }
+    }
+
+    /// A blip every other letter while the dialog box types her line.
+    private func typeOutPrincessLine() {
+        typing?.cancel()
+        typing = Task { [weak self] in
+            for index in 0..<PrincessLine.full.count {
+                try? await Task.sleep(for: .seconds(PrincessLine.characterDelay))
+                guard !Task.isCancelled else { return }
+                if index % 2 == 0 { self?.feedback.blip() }
+            }
         }
     }
 

@@ -50,6 +50,20 @@ final class Feedback {
         play(.reject)
     }
 
+    func castle() {
+        play(.rise)
+    }
+
+    func heart() {
+        tapHaptic.impactOccurred(intensity: 0.5)
+        play(.chime)
+    }
+
+    /// One letter of the princess's line being typed out.
+    func blip() {
+        play(.blip)
+    }
+
     private func play(_ effect: ChipSounds.Effect) {
         guard !isMuted else { return }
         sounds.play(effect)

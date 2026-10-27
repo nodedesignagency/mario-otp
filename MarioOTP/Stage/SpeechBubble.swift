@@ -67,7 +67,7 @@ private struct SlotChip: View {
 }
 
 /// Ink outline and white fill, both with stepped corners.
-private struct PixelFrame: View {
+struct PixelFrame: View {
     var body: some View {
         ZStack {
             SteppedRectangle(step: 3, steps: 2).fill(Theme.ink)

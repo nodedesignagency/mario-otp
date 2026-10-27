@@ -10,7 +10,9 @@ over into a gold **?** block. Mario then punches each one from below with his si
 - **Some wrong**: greens stay locked in, reds clear, and you retype only those. Mario then sweeps back
   across and punches just the keys you changed.
 - **All correct**: the keys collapse into a deck and become one gold ?-block. Mario punches it into a big green check
-  key, and a fountain of coins bursts out. *Verified.*
+  key, and a fountain of coins bursts out. Then, like the end of a level, a brick castle rises at the end of the road,
+  Princess Peach walks out to meet him, a heart pops, and a retro dialog box types out her line:
+  *"Thank you, Mario! Your number is verified."*
 
 ![Motion preview](docs/choreography-preview.gif)
 
@@ -66,7 +68,7 @@ type 4th digit ─▶ OTPFlowModel.startVerification()
            keys, coins, Mario, speech bubble, rings       commit → lock greens / clear reds
 ```
 
-- `Stage/Choreography.swift` holds the physics. A bonk takes off as if aiming 35% above the key, stops
+- `Stage/Choreography.swift` holds the physics, plus the princess's entrance (`PrincessEntrance`). A bonk takes off as if aiming 35% above the key, stops
   dead when the fist touches it, and falls back under the same gravity. The hop is timed so the fist touches
   the underside of each key, under its centre, right on the hit cue.
 - `Stage/StageScene.swift` turns the choreography plus the time into a frame as plain values: the key flip,
@@ -74,7 +76,7 @@ type 4th digit ─▶ OTPFlowModel.startVerification()
   speech bubble goes.
 - `Stage/StageView.swift`, `KeycapView.swift` and `SpeechBubble.swift` render the frame. The keycaps, the
   gold ?-block face, the stepped pixel bubble, and the pixel sprites (`Sprites/Sprites.swift`, drawn as text
-  grids) all live here.
+  grids) all live here. `Flow/PrincessDialog.swift` is the typewriter dialog box.
 
 Tuning knobs: `StageLayout` (sizes, jump headroom), `Choreography` (run speed, merge timing),
 `BonkJump` (jump feel), `Motion` (flip, bump, shake, coin and fountain curves), `Theme` (the palette).
@@ -91,6 +93,6 @@ Tuning knobs: `StageLayout` (sizes, jump headroom), `Choreography` (run speed, m
 
 ## A note on Mario
 
-The plumber sprites are hand-made fan art, so this works as a concept or portfolio piece. Mario is Nintendo's IP: before
-shipping to the App Store, swap the sprites in `Sprites.swift` for your own mascot. The animation
+The plumber and princess sprites are hand-made fan art, so this works as a concept or portfolio piece. Mario and Peach are
+Nintendo's IP: before shipping to the App Store, swap the sprites in `Sprites.swift` for your own characters. The animation
 system doesn't care who's jumping.

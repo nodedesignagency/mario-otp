@@ -4,7 +4,7 @@ import AVFoundation
 /// and noise "notes", so there are no audio files to ship (or license).
 final class ChipSounds {
     enum Effect: CaseIterable {
-        case tap, jump, coin, bump, merge, fanfare, hop, reject
+        case tap, jump, coin, bump, merge, fanfare, hop, reject, rise, chime, blip
     }
 
     private let engine = AVAudioEngine()
@@ -101,6 +101,13 @@ private extension ChipSounds.Effect {
             return [Note.sweep(400, 700, 0.09, volume: 0.2, duty: 0.25)]
         case .reject:
             return [Note.square(392, 0.12, volume: 0.26), Note.sweep(311.13, 293.66, 0.3, volume: 0.26, decay: 3)]
+        case .rise:
+            return [Note(wave: .triangle, from: 110, to: 330, duration: 0.38, volume: 0.7)]
+        case .chime:
+            return [Note.square(1318.5, 0.07, volume: 0.16, duty: 0.25),
+                    Note.square(1760, 0.26, volume: 0.16, duty: 0.25, decay: 6)]
+        case .blip:
+            return [Note.square(1046.5, 0.018, volume: 0.09, duty: 0.25)]
         }
     }
 }

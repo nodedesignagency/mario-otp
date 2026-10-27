@@ -61,6 +61,16 @@ struct SpeechState: Equatable {
     var scale: Double
 }
 
+struct CastleState: Equatable {
+    var center: CGPoint
+    var opacity: Double
+}
+
+struct HeartState: Equatable {
+    var center: CGPoint
+    var scale: Double
+}
+
 /// Everything the stage needs from the flow model for one frame.
 struct StageInput {
     var digits: [Character?]
@@ -84,6 +94,9 @@ struct StageScene {
     var rings: [RingState] = []
     var mario: MarioPose?
     var speech: SpeechState?
+    var castle: CastleState?
+    var princess: PrincessPose?
+    var heart: HeartState?
 
     init(input: StageInput, layout: StageLayout) {
         if let choreography = input.choreography {
@@ -210,6 +223,31 @@ struct StageScene {
             }
         }
         blocks.append(prize)
+
+        if let entrance = c.princess {
+            addEnding(entrance, t: t, pose: pose, animated: animated, layout: layout)
+        }
+    }
+
+    private mutating func addEnding(_ entrance: PrincessEntrance, t: Double, pose: MarioPose,
+                                    animated: Bool, layout: StageLayout) {
+        let rise = entrance.castleProgress(at: t)
+        if rise > 0 {
+            let lift = animated ? CGFloat(1 - Motion.easeOut(rise)) * 14 : 0
+            castle = CastleState(
+                center: CGPoint(x: entrance.castleX,
+                                y: layout.groundY - StageLayout.castleSize.height / 2 + lift),
+                opacity: rise)
+        }
+        princess = entrance.pose(at: t)
+        let dt = t - entrance.arriveAt
+        if dt >= 0 {
+            // A heart pops between their heads and floats up a touch.
+            let float = animated ? CGFloat(Motion.easeOut(Motion.clamp(dt / 0.6))) * 8 : 8
+            heart = HeartState(
+                center: CGPoint(x: (pose.x + entrance.toX) / 2, y: layout.groundY - 62 - float),
+                scale: animated ? Motion.pop(dt) : 1)
+        }
     }
 
     /// Places the bubble beside Mario's head, on the side with more room.

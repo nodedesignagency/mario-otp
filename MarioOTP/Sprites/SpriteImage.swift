@@ -33,6 +33,11 @@ enum SpriteImage {
     static let question = Sprites.question.makeImage()
     static let bubbleTail = Sprites.bubbleTail.makeImage()
     static let brick = Sprites.brick.makeImage()
+    static let princess = Sprites.princess.makeImage()
+    static let princessStep = Sprites.princessStep.makeImage()
+    static let princessPortrait = Sprites.princessPortrait.makeImage()
+    static let castle = Sprites.castle.makeImage()
+    static let heart = Sprites.heart.makeImage()
 
     static func mario(_ frame: MarioFrame) -> CGImage {
         switch frame {

@@ -10,7 +10,7 @@ struct PixelArt {
     var height: Int { rows.count }
 }
 
-/// Hand-drawn 16×16 fan-art plumber plus the bits of scenery he needs.
+/// Hand-drawn 16×16 fan-art plumber, his princess, and the bits of scenery they need.
 enum Sprites {
     static let marioPalette: [Character: UInt32] = [
         "R": 0xE4281E, // cap & shirt
@@ -156,6 +156,112 @@ enum Sprites {
         "....K",
     ], palette: ["K": 0x1C1D26, "W": 0xFFFFFF])
 
+    static let princessPalette: [Character: UInt32] = [
+        "G": 0xFFC234, // crown
+        "J": 0x3D7BFF, // jewels
+        "A": 0xFFD54A, // hair
+        "a": 0xD6A028, // hair shade
+        "S": 0xFDBF8E, // skin
+        "E": 0x1B0E08, // eye
+        "Q": 0xEE4A33, // lips
+        "P": 0xFF8FC8, // dress
+        "p": 0xE2559B, // dress shade
+        "W": 0xFFFFFF, // gloves
+        "D": 0x3C3630, // shoes
+    ]
+
+    /// Fan-art princess, 16×24 so she stands a head taller than Mario.
+    static let princess = PixelArt(rows: [
+        ".......GJG......",
+        "......GGGGG.....",
+        ".....AAAAAAA....",
+        "....AAAAAAAAA...",
+        "....AAASSSSAA...",
+        "...AAASSESSSA...",
+        "...AAASSESSSS...",
+        "...AAASSSSSSSS..",
+        "...AAAASSQQS....",
+        "...AAAAASSS.....",
+        "...AAAAA.SS.....",
+        "...AAAppPPpp....",
+        "..AAAppPJPPpp...",
+        "..AAAppPPPPpp...",
+        "...aaWPPPPPPW...",
+        "....WPPPPPPPW...",
+        "....PPPPPPPP....",
+        "...PPPPPPPPPP...",
+        "...PPPPPPPPPP...",
+        "..PPPpPPPPpPPP..",
+        "..PPpPPPPPPpPP..",
+        ".PPPpPPPPPPPpPP.",
+        ".PPpppppppppppP.",
+        "...DD......DD...",
+    ], palette: princessPalette)
+
+    static let princessStep = PixelArt(rows: [
+        ".......GJG......",
+        "......GGGGG.....",
+        ".....AAAAAAA....",
+        "....AAAAAAAAA...",
+        "....AAASSSSAA...",
+        "...AAASSESSSA...",
+        "...AAASSESSSS...",
+        "...AAASSSSSSSS..",
+        "...AAAASSQQS....",
+        "...AAAAASSS.....",
+        "...AAAAA.SS.....",
+        "...AAAppPPpp....",
+        "..AAAppPJPPpp...",
+        "..AAAppPPPPpp...",
+        "...aaWPPPPPPW...",
+        "....WPPPPPPPW...",
+        "....PPPPPPPPP...",
+        "...PPPPPPPPPPP..",
+        "...PPpPPPPPpPPP.",
+        "..PPpPPPPPPPpPP.",
+        "..PPpPPPPPPPPpPP",
+        "..PpppppppppppP.",
+        ".PPppppppppppP..",
+        "....DD......DD..",
+    ], palette: princessPalette)
+
+    /// Her head and shoulders, for the dialog box.
+    static let princessPortrait = PixelArt(rows: Array(princess.rows.prefix(12)), palette: princessPalette)
+
+    /// The 1-1 castle, in the same bricks as the road.
+    static let castle = PixelArt(rows: [
+        "......LL..LL..LL........",
+        "......oo..oo..oo........",
+        "......LLLLLMLLLLLM......",
+        "......oooooMoooooM......",
+        "......oooooDDooooM......",
+        "......MMMMMDDMMMMM......",
+        "......LLMLLDDLMLLL......",
+        "......ooMoooooMooo......",
+        "LL..LLooMoooooMooo..LL..",
+        "oo..ooMMMMMMMMMMMM..oo..",
+        "LLLLLMLLLLLMLLLLLMLLLLLM",
+        "oooooMoooooMoooooMoooooM",
+        "oooooMoooooMoooooMoooooM",
+        "MMMMMMMMMMDDDDMMMMMMMMMM",
+        "LLMLLLLLMDDDDDDLLLLLMLLL",
+        "ooMoooooMDDDDDDoooooMooo",
+        "ooMoooooMDDDDDDoooooMooo",
+        "MMMMMMMMMDDDDDDMMMMMMMMM",
+        "LLLLLMLLLDDDDDDLLMLLLLLM",
+        "oooooMoooDDDDDDooMoooooM",
+    ], palette: ["L": 0xE8824A, "o": 0xB4531E, "M": 0x5A2A10, "D": 0x2A1E18])
+
+    static let heart = PixelArt(rows: [
+        ".QQ.QQ.",
+        "QWQQQQQ",
+        "QQQQQQQ",
+        "QQQQQQQ",
+        ".QQQQQ.",
+        "..QQQ..",
+        "...Q...",
+    ], palette: ["Q": 0xEE4A33, "W": 0xFFFFFF])
+
     /// One tile of the brick road.
     static let brick = PixelArt(rows: [
         "LLLLLLLM",
@@ -168,5 +274,8 @@ enum Sprites {
         "MMMMMMMM",
     ], palette: ["L": 0xE8824A, "o": 0xB4531E, "M": 0x5A2A10])
 
-    static var all: [PixelArt] { [marioStand, marioJump, coin, question, bubbleTail, brick] + marioRun }
+    static var all: [PixelArt] {
+        [marioStand, marioJump, coin, question, bubbleTail, brick,
+         princess, princessStep, princessPortrait, castle, heart] + marioRun
+    }
 }
