@@ -1,6 +1,8 @@
 # Saved UI directions
 
-Three retro × modern directions explored for the verify screen (not in the app yet):
+**Pixel × Paper** ([`pixel-paper.png`](pixel-paper.png)) is the direction the app now uses.
+
+Three earlier retro × modern directions, kept for reference:
 
 - **A · Glass World**: Liquid Glass panels over a pixel World 1-1 at dusk.
 - **B · Pocket Console**: the screen as a translucent purple handheld with an LCD and rubber keys.

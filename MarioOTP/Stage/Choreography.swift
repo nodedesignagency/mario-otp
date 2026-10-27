@@ -128,7 +128,7 @@ struct Choreography: Equatable {
     static let strideLength: CGFloat = 9
     /// How far ahead of Mario's centre his raised fist is.
     static let fistReach: CGFloat = 15
-    static let mergeDuration = 0.45
+    static let mergeDuration = 0.55
     static let shakeDuration = 0.45
 
     var moves: [MarioMove]
@@ -164,12 +164,13 @@ extension Choreography {
 
     private static func animated(layout: StageLayout, targets: [Target], spot: MarioSpot?) -> Choreography {
         let jump = BonkJump(contactLift: StageLayout.headroom)
-        var track = Track(spot: spot ?? MarioSpot(x: layout.offstageLeft, facing: .right))
+        var track = Track(spot: spot ?? layout.startSpot)
         // Sweep across the row starting from whichever end Mario is nearer.
         let heading: Facing = track.x > layout.centerX ? .left : .right
         let ordered = targets.sorted { heading == .right ? $0.slot < $1.slot : $0.slot > $1.slot }
 
-        track.stand(for: spot == nil ? 0.15 : 0.1)
+        // Give the keys a moment to flip over into ? blocks before the first punch.
+        track.stand(for: 0.28)
         var hits: [Hit] = []
         for target in ordered {
             let contact = track.bonk(under: layout.blockCenterX(target.slot), heading: heading,

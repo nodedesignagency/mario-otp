@@ -4,34 +4,29 @@ import Observation
 enum Headline: Hashable {
     case prompt
     case resent
-    case retry(wrong: Int)
+    case retry
     case verified
 
     var title: String {
         switch self {
         case .prompt: return "Let’s verify your number"
-        case .resent: return "Fresh code, coming up"
+        case .resent: return "Fresh code sent"
         case .retry: return "So close!"
-        case .verified: return "Verified successfully"
+        case .verified: return "Verified"
         }
     }
 
-    var subtitle: String? {
+    var subtitle: String {
         switch self {
-        case .prompt:
-            return "We’ve sent a 4-digit code to your phone.\nIt’ll auto-verify once entered."
-        case .resent:
-            return "We’ve sent you a new 4-digit code.\nIt’ll auto-verify once entered."
-        case .retry(let wrong):
-            let count = wrong == 1 ? "One digit was" : "\(wrong) digits were"
-            return "\(count) off — greens are locked in.\nRetype the empty blocks."
-        case .verified:
-            return nil
+        case .prompt: return "We sent a 4-digit code to •••• 4821.\nIt verifies on its own once entered."
+        case .resent: return "A new 4-digit code is on its way.\nIt verifies on its own once entered."
+        case .retry: return "Greens are right and stay locked.\nRetype the red ones."
+        case .verified: return "You’re in. Nice punching."
         }
     }
 }
 
-/// Stand-in for the real backend. Grades every digit separately so Mario can light each block.
+/// Stand-in for the real backend. Grades every digit separately so Mario can light each key.
 enum CodeVerifier {
     static func check(_ entered: [Character], against code: String) -> [Bool] {
         zip(entered, code).map { $0 == $1 }
@@ -40,6 +35,15 @@ enum CodeVerifier {
     static func randomCode(length: Int) -> String {
         String((0..<length).map { _ in Character(String(Int.random(in: 0...9))) })
     }
+}
+
+/// What the ticket shows once a code is verified.
+struct RoundResult: Equatable {
+    var coins: Int
+    var score: Int
+    var duration: TimeInterval
+    var attempts: Int
+    var serial: String
 }
 
 @MainActor
@@ -64,18 +68,27 @@ final class OTPFlowModel {
     private(set) var headline: Headline = .prompt
     private(set) var activeRun: ActiveRun?
     private(set) var restingMario: MarioSpot?
+    /// Slots Mario is pointing at after a miss, until you start typing again.
+    private(set) var speech: [Int]?
     private(set) var demoCode = "1985"
     private(set) var score = 0
     private(set) var coins = 0
-    private(set) var world = 1
     private(set) var isMuted = false
     private(set) var resendAvailableAt = Date().addingTimeInterval(OTPFlowModel.resendCooldown)
+    private(set) var result: RoundResult?
+    /// The finale has finished moving, so the stage can stop redrawing every frame.
+    private(set) var isStageSettled = false
 
     /// Reported by the stage once it knows its width.
     @ObservationIgnored var layout: StageLayout?
     @ObservationIgnored var reduceMotion = false
     private let feedback: Feedback
     @ObservationIgnored private var playback: Task<Void, Never>?
+    @ObservationIgnored private var round = 1
+    @ObservationIgnored private var roundStartedAt: Date?
+    @ObservationIgnored private var roundCoins = 0
+    @ObservationIgnored private var roundScore = 0
+    @ObservationIgnored private var attempts = 0
 
     init() {
         feedback = Feedback()
@@ -98,7 +111,7 @@ final class OTPFlowModel {
 
     func stageInput(time: Double, isFocused: Bool) -> StageInput {
         StageInput(digits: digits, locked: locked, activeSlot: activeSlot,
-                   isFocused: isFocused && acceptsInput, restingMario: restingMario,
+                   isFocused: isFocused && acceptsInput, restingMario: restingMario, speech: speech,
                    choreography: activeRun?.choreography, time: time)
     }
 
@@ -114,7 +127,13 @@ final class OTPFlowModel {
 
         let grew = next.compactMap { $0 }.count > digits.compactMap { $0 }.count
         digits = next
-        if grew { feedback.keyTap() }
+        if grew {
+            feedback.keyTap()
+            if roundStartedAt == nil { roundStartedAt = Date() }
+            if speech != nil {
+                withAnimation(.easeOut(duration: 0.2)) { speech = nil }
+            }
+        }
         if typed.count == slots.count { startVerification() }
     }
 
@@ -127,26 +146,37 @@ final class OTPFlowModel {
         guard acceptsInput, Date() >= resendAvailableAt else { return }
         demoCode = CodeVerifier.randomCode(length: Self.codeLength)
         withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
-            digits = Array(repeating: nil, count: Self.codeLength)
-            locked = []
+            clearRound()
             headline = .resent
         }
         resendAvailableAt = Date().addingTimeInterval(Self.resendCooldown)
         feedback.hop()
     }
 
-    func playAgain() {
+    /// Back to an empty code. Mario stays wherever he is.
+    func startOver() {
+        guard phase != .checking else { return }
         playback?.cancel()
         withAnimation(.easeInOut(duration: 0.35)) {
-            digits = Array(repeating: nil, count: Self.codeLength)
-            locked = []
+            clearRound()
             activeRun = nil
-            restingMario = nil
+            isStageSettled = false
             phase = .entering
             headline = .prompt
-            world += 1
         }
+        round += 1
         resendAvailableAt = Date().addingTimeInterval(Self.resendCooldown)
+    }
+
+    private func clearRound() {
+        digits = Array(repeating: nil, count: Self.codeLength)
+        locked = []
+        speech = nil
+        result = nil
+        roundStartedAt = nil
+        roundCoins = 0
+        roundScore = 0
+        attempts = 0
     }
 
     // MARK: - The run
@@ -161,6 +191,9 @@ final class OTPFlowModel {
         let choreography = Choreography.make(layout: layout, targets: targets,
                                              mario: restingMario, reducedMotion: reduceMotion)
         let start = Date()
+        attempts += 1
+        speech = nil
+        isStageSettled = false
         phase = .checking
         activeRun = ActiveRun(start: start, choreography: choreography)
 
@@ -188,6 +221,8 @@ final class OTPFlowModel {
         case let .hit(_, correct):
             if correct {
                 feedback.coin()
+                roundCoins += 1
+                roundScore += 200
                 withAnimation(.snappy) {
                     coins += 1
                     score += 200
@@ -199,8 +234,10 @@ final class OTPFlowModel {
             feedback.merge()
         case .reveal:
             feedback.reveal()
+            let bonus = attempts == 1 ? 1000 : 500
+            roundScore += bonus
             withAnimation(.snappy) {
-                score += 1000
+                score += bonus
                 headline = .verified
             }
             AccessibilityNotification.Announcement(headline.title).post()
@@ -208,8 +245,9 @@ final class OTPFlowModel {
             feedback.hop()
         case .reject:
             feedback.reject()
-            headline = .retry(wrong: choreography.hits.filter { !$0.correct }.count)
-            let announcement = [headline.title, headline.subtitle ?? ""].joined(separator: " ")
+            headline = .retry
+            let wrong = choreography.hits.filter { !$0.correct }.map { String($0.slot + 1) }
+            let announcement = "So close. Fix digits " + wrong.joined(separator: ", ") + "."
             AccessibilityNotification.Announcement(announcement).post()
         case .commit:
             commit(choreography)
@@ -219,8 +257,16 @@ final class OTPFlowModel {
     private func commit(_ choreography: Choreography) {
         restingMario = choreography.marioEnd
         if choreography.succeeds {
-            // Keep the run alive so the check block keeps its slow glow pulse.
+            let duration = roundStartedAt.map { Date().timeIntervalSince($0) } ?? choreography.commitTime
+            result = RoundResult(coins: roundCoins, score: roundScore, duration: duration, attempts: attempts,
+                                 serial: "\(demoCode)-\(String(format: "%04d", round))")
+            // Keep the run alive so the check key stays on stage, and let the rings finish before pausing.
             phase = .verified
+            playback = Task { [weak self] in
+                try? await Task.sleep(for: .seconds(0.6))
+                guard !Task.isCancelled, self?.phase == .verified else { return }
+                self?.isStageSettled = true
+            }
             return
         }
         withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
@@ -231,9 +277,9 @@ final class OTPFlowModel {
                     digits[hit.slot] = nil
                 }
             }
+            speech = choreography.hits.filter { !$0.correct }.map(\.slot)
             activeRun = nil
             phase = .entering
-            world += 1
         }
     }
 }

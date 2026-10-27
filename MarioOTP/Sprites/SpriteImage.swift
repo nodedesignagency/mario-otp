@@ -31,6 +31,7 @@ enum SpriteImage {
     static let jump = Sprites.marioJump.makeImage()
     static let coin = Sprites.coin.makeImage()
     static let question = Sprites.question.makeImage()
+    static let bubbleTail = Sprites.bubbleTail.makeImage()
     static let brick = Sprites.brick.makeImage()
 
     static func mario(_ frame: MarioFrame) -> CGImage {

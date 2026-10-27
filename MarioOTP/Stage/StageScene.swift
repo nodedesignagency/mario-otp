@@ -1,6 +1,7 @@
 import Foundation
 
 enum BlockTone: Equatable {
+    /// `pending` is the gold "?" block a key flips into once the code is complete.
     case empty, active, filled, pending, correct, wrong
 }
 
@@ -18,14 +19,20 @@ struct BlockState: Identifiable, Equatable {
     var tone: BlockTone
     var glyph: BlockGlyph
     var glyphOpacity: Double = 1
-    /// White flash on impact, 0...1.
+    /// Light flash on impact, 0...1.
     var flash: Double = 0
-    /// How far the block has turned into a gold "?" block, 0...1.
+    /// How far a green key has turned back into a gold "?" block during the merge, 0...1.
     var gold: Double = 0
-    /// Multiplier on the tone's glow, used for the waiting pulse.
-    var glow: Double = 1
     var opacity: Double = 1
-    var showsCaret = false
+    var scale: Double = 1
+    /// Vertical squash while the key flips over (1 = face on, ~0 = edge on).
+    var flip: Double = 1
+    /// Stacking order while the row collapses into a deck (left key on top).
+    var zIndex: Double = 0
+    /// How much of the check mark has been drawn, 0...1.
+    var checkTrim: Double = 1
+    /// The big green check key at the end.
+    var isHero = false
 }
 
 struct CoinState: Identifiable, Equatable {
@@ -34,6 +41,8 @@ struct CoinState: Identifiable, Equatable {
     /// Horizontal squash that fakes the coin spinning.
     var spin: Double
     var opacity: Double
+    /// Burst coins fly in front of the keys; hit coins rise from behind them.
+    var popsOut = false
 }
 
 struct RingState: Identifiable, Equatable {
@@ -43,18 +52,13 @@ struct RingState: Identifiable, Equatable {
     var opacity: Double
 }
 
-struct ConfettiPiece: Equatable {
+/// Mario's speech bubble after a miss.
+struct SpeechState: Equatable {
     var center: CGPoint
-    var size: CGFloat
-    var rotation: Double
-    var palette: Int
-    var opacity: Double
-}
-
-struct BubbleState: Equatable {
-    var center: CGPoint
+    /// Mario stands to the right of the bubble, so the tail sits on its right.
+    var tailOnRight: Bool
+    var wrongSlots: [Int]
     var scale: Double
-    var opacity: Double
 }
 
 /// Everything the stage needs from the flow model for one frame.
@@ -64,6 +68,8 @@ struct StageInput {
     var activeSlot: Int?
     var isFocused: Bool
     var restingMario: MarioSpot?
+    /// Slots Mario is still telling you to fix, once a miss has been committed.
+    var speech: [Int]?
     var choreography: Choreography?
     /// Seconds since the choreography started.
     var time: Double
@@ -76,9 +82,8 @@ struct StageScene {
     var blocks: [BlockState] = []
     var coins: [CoinState] = []
     var rings: [RingState] = []
-    var confetti: [ConfettiPiece] = []
     var mario: MarioPose?
-    var bubble: BubbleState?
+    var speech: SpeechState?
 
     init(input: StageInput, layout: StageLayout) {
         if let choreography = input.choreography {
@@ -102,20 +107,26 @@ struct StageScene {
                 tone = .empty
             }
             blocks.append(BlockState(id: slot, center: Self.blockCenter(slot, layout), tone: tone,
-                                     glyph: Self.glyph(digit), showsCaret: tone == .active))
+                                     glyph: Self.glyph(digit)))
         }
-        mario = input.restingMario.map { MarioPose(x: $0.x, lift: 0, frame: .stand, facing: $0.facing) }
+        let pose = Self.standing(at: input.restingMario ?? layout.startSpot)
+        mario = pose
+        if let wrong = input.speech {
+            speech = Self.speech(beside: pose, wrong: wrong, layout: layout, scale: 1)
+        }
     }
 
     private mutating func buildRunning(_ c: Choreography, input: StageInput, layout: StageLayout) {
         let t = input.time
         let animated = !c.reducedMotion
-        mario = c.marioPose(at: t)
+        let pose = c.marioPose(at: t) ?? Self.standing(at: input.restingMario ?? layout.startSpot)
+        mario = pose
 
         var merge = 0.0
         if case let .verified(mergeStart, _) = c.outcome {
-            merge = Motion.easeInOut(Motion.clamp((t - mergeStart) / Choreography.mergeDuration))
+            merge = Motion.clamp((t - mergeStart) / Choreography.mergeDuration)
         }
+        let flipOrder = c.hits.map(\.slot).sorted()
 
         for slot in 0..<StageLayout.slotCount {
             var block = BlockState(id: slot, center: Self.blockCenter(slot, layout),
@@ -125,8 +136,11 @@ struct StageScene {
             if let hit = c.hit(for: slot) {
                 let dt = t - hit.time
                 if dt < 0 {
-                    block.tone = .pending
-                    block.glow = 0.7 + 0.3 * sin(t * 9 + Double(slot) * 0.8)
+                    // Each key flips over into a ? block, left to right, the moment the code is complete.
+                    let order = Double(flipOrder.firstIndex(of: slot) ?? 0)
+                    let p = animated ? Motion.clamp((t - 0.06 * order) / 0.24) : 1
+                    block.tone = p < 0.5 ? .filled : .pending
+                    block.flip = Motion.flip(p)
                 } else {
                     block.tone = hit.correct ? .correct : .wrong
                     block.flash = max(0, 1 - dt / 0.28)
@@ -148,53 +162,69 @@ struct StageScene {
 
             if merge > 0 {
                 if animated {
-                    block.offset.width += (layout.centerX - block.center.x) * CGFloat(merge)
-                    block.offset.height -= CGFloat(sin(merge * .pi)) * 10
-                    block.gold = Motion.smoothstep(0.25, 1, merge)
+                    let deck = Motion.deck(slot: slot, progress: merge, from: block.center.x, centerX: layout.centerX)
+                    block.offset.width += deck.dx
+                    block.scale = deck.scale
+                    block.zIndex = Double(StageLayout.slotCount - slot)
+                    block.gold = Motion.smoothstep(0.35, 1, merge)
                 } else {
                     block.opacity = 1 - merge
                 }
-                block.glyphOpacity = max(0, 1 - merge * 2.2)
+                block.glyphOpacity = max(0, 1 - merge * 2.5)
                 if merge >= 1 { block.opacity = 0 }
             }
             blocks.append(block)
         }
 
+        if case let .retry(reject) = c.outcome, t >= reject {
+            let wrong = c.hits.filter { !$0.correct }.map(\.slot)
+            speech = Self.speech(beside: pose, wrong: wrong, layout: layout,
+                                 scale: animated ? Motion.pop(t - reject) : 1)
+        }
+
         guard case let .verified(mergeStart, reveal) = c.outcome, merge >= 1 || (!animated && merge > 0) else {
-            addBubble(c, t: t, layout: layout)
             return
         }
 
-        // The merged "?" block, which Mario punches into a check mark.
+        // The merged "?" block, which Mario punches into the check key.
         let center = CGPoint(x: layout.centerX, y: layout.blockCenterY)
-        var prize = BlockState(id: Self.prizeID, center: center, tone: .correct, glyph: .question, gold: 1)
+        var prize = BlockState(id: Self.prizeID, center: center, tone: .correct, glyph: .question, gold: 1,
+                               zIndex: Double(StageLayout.slotCount + 1))
         let dt = t - reveal
         if dt < 0 {
             prize.glyphOpacity = Motion.clamp((t - mergeStart - Choreography.mergeDuration) / 0.15)
-            prize.glow = 0.8 + 0.2 * sin(t * 8)
             if !animated { prize.opacity = merge }
         } else {
             prize.glyph = .check
             prize.gold = 0
+            prize.isHero = true
             prize.flash = max(0, 1 - dt / 0.35)
             if animated {
+                prize.scale = 1 + 0.3 * Motion.pop(dt)
+                prize.checkTrim = Motion.easeOut(Motion.clamp((dt - 0.05) / 0.32))
                 prize.offset = Motion.bump(dt, height: 12)
                 rings = Motion.rings(sinceReveal: dt, center: center)
-                confetti = Motion.confetti(sinceReveal: dt, origin: center)
+                coins += Motion.coinBurst(sinceReveal: dt, origin: center)
+            } else {
+                prize.scale = 1.3
             }
         }
         blocks.append(prize)
     }
 
-    private mutating func addBubble(_ c: Choreography, t: Double, layout: StageLayout) {
-        guard case let .retry(reject) = c.outcome, !c.reducedMotion, let pose = mario else { return }
-        let dt = t - reject
-        let life = c.commitTime - reject
-        guard dt >= 0, dt <= life else { return }
-        bubble = BubbleState(
-            center: CGPoint(x: pose.x, y: layout.groundY - StageLayout.marioSize - 20 - pose.lift),
-            scale: Motion.pop(dt),
-            opacity: Motion.clamp((life - dt) / 0.2))
+    /// Places the bubble beside Mario's head, on the side with more room.
+    static func speech(beside pose: MarioPose, wrong: [Int], layout: StageLayout, scale: Double) -> SpeechState {
+        let size = StageLayout.bubbleSize
+        let tailOnRight = pose.x > layout.centerX
+        let marioTop = layout.groundY - StageLayout.marioSize - pose.lift
+        let ideal = tailOnRight ? pose.x - 8 - size.width / 2 : pose.x + 8 + size.width / 2
+        let x = min(max(ideal, size.width / 2 + 12), layout.width - size.width / 2 - 12)
+        return SpeechState(center: CGPoint(x: x, y: marioTop + 8 - size.height / 2),
+                           tailOnRight: tailOnRight, wrongSlots: wrong.sorted(), scale: scale)
+    }
+
+    private static func standing(at spot: MarioSpot) -> MarioPose {
+        MarioPose(x: spot.x, lift: 0, frame: .stand, facing: spot.facing)
     }
 
     private static func blockCenter(_ slot: Int, _ layout: StageLayout) -> CGPoint {
@@ -223,13 +253,29 @@ enum Motion {
         return u * u * (3 - 2 * u)
     }
 
-    /// Block knocked up and dropping back, like a brick in 1-1.
+    /// Squash for a key turning over: face on at 0 and 1, edge on at 0.5.
+    static func flip(_ p: Double) -> Double {
+        max(0.04, abs(cos(.pi * p)))
+    }
+
+    /// The reference's collapse: the row slides into a fanned deck around the centre (left key on top),
+    /// then the fan closes into a single key.
+    static func deck(slot: Int, progress: Double, from x: CGFloat, centerX: CGFloat) -> (dx: CGFloat, scale: Double) {
+        let gather = easeInOut(clamp(progress / 0.65))
+        let close = easeInOut(clamp((progress - 0.65) / 0.35))
+        let spread = 8 * CGFloat(1 - close)
+        let fanned = centerX + (CGFloat(slot) - CGFloat(StageLayout.slotCount - 1) / 2) * spread
+        let scale = 1 - 0.035 * Double(slot) * (1 - close) * gather
+        return ((fanned - x) * CGFloat(gather), scale)
+    }
+
+    /// Key knocked up and dropping back, like a brick in 1-1.
     static func bump(_ dt: Double, height: Double) -> CGSize {
         guard dt >= 0, dt < 0.2 else { return .zero }
         return CGSize(width: 0, height: -height * sin(.pi * dt / 0.2))
     }
 
-    /// A wrong block barely budges and rattles instead.
+    /// A wrong key barely budges and rattles instead.
     static func dud(_ dt: Double) -> CGSize {
         guard dt >= 0, dt < 0.25 else { return .zero }
         let lift = dt < 0.16 ? -5 * sin(.pi * dt / 0.16) : 0
@@ -251,49 +297,37 @@ enum Motion {
         guard dt >= 0, dt <= coinLife else { return nil }
         let u = dt / coinLife
         let arc = (u - 0.45) / 0.45
-        let rise = CGFloat(max(0, 1 - arc * arc) * 80)
+        let rise = CGFloat(max(0, 1 - arc * arc) * 62)
         let spin = 0.2 + 0.8 * abs(cos(u * 3 * .pi))
         let opacity = u < 0.7 ? 1 : 1 - (u - 0.7) / 0.3
         return (rise, spin, opacity)
     }
 
     static func rings(sinceReveal dt: Double, center: CGPoint) -> [RingState] {
-        var rings: [RingState] = []
-        for k in 0..<3 {
-            let local = dt - Double(k) * 0.14
-            guard local >= 0, local < 1.2 else { continue }
-            let p = local / 1.2
-            rings.append(RingState(id: k, center: center, scale: 1 + 1.6 * easeOut(p), opacity: 0.55 * (1 - p)))
+        (0..<2).compactMap { k -> RingState? in
+            let local = dt - Double(k) * 0.16
+            guard local >= 0, local < 1.1 else { return nil }
+            let p = local / 1.1
+            return RingState(id: k, center: center, scale: 1.3 + 1.2 * easeOut(p), opacity: 0.4 * (1 - p))
         }
-        // A slow heartbeat once the burst is over.
-        let ambient = dt - 1.5
-        if ambient >= 0 {
-            let p = ambient.truncatingRemainder(dividingBy: 2.6) / 2.0
-            if p <= 1 {
-                rings.append(RingState(id: 10, center: center, scale: 1 + 1.3 * easeOut(p), opacity: 0.25 * (1 - p)))
-            }
-        }
-        return rings
     }
 
-    static func confetti(sinceReveal dt: Double, origin: CGPoint) -> [ConfettiPiece] {
-        guard dt >= 0, dt < 1.4 else { return [] }
-        return (0..<26).map { i in
-            let r1 = noise(i, 1), r2 = noise(i, 2), r3 = noise(i, 3)
-            let angle = -Double.pi / 2 + (r1 - 0.5) * 2.4
-            let speed = 240 + 200 * r2
+    /// A fountain of coins out of the check key.
+    static func coinBurst(sinceReveal dt: Double, origin: CGPoint) -> [CoinState] {
+        guard dt >= 0, dt < 0.95 else { return [] }
+        return (0..<8).map { i in
+            let r1 = noise(i, 7), r2 = noise(i, 8)
+            let angle = -Double.pi / 2 + (Double(i) - 3.5) / 3.5 * 0.95 + (r1 - 0.5) * 0.2
+            let speed = 380 + 110 * r2
             let x = Double(origin.x) + cos(angle) * speed * dt
-            let y = Double(origin.y) + sin(angle) * speed * dt + 0.5 * 900 * dt * dt
-            return ConfettiPiece(
-                center: CGPoint(x: x, y: y),
-                size: 4 + (r3 * 3).rounded(),
-                rotation: dt * (4 + 8 * r3) * (r1 > 0.5 ? 1 : -1),
-                palette: i % 5,
-                opacity: 1 - smoothstep(0.8, 1.4, dt))
+            let y = Double(origin.y) + sin(angle) * speed * dt + 0.5 * 1500 * dt * dt
+            return CoinState(id: 100 + i, center: CGPoint(x: x, y: y),
+                             spin: 0.2 + 0.8 * abs(cos(dt * 14 + r1 * 6)),
+                             opacity: 1 - smoothstep(0.55, 0.95, dt), popsOut: true)
         }
     }
 
-    /// Deterministic 0..<1 noise so confetti looks random but never flickers between frames.
+    /// Deterministic 0..<1 noise so the burst looks random but never flickers between frames.
     private static func noise(_ i: Int, _ salt: Int) -> Double {
         let v = sin(Double(i) * 12.9898 + Double(salt) * 78.233) * 43758.5453
         return v - floor(v)

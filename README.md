@@ -1,19 +1,22 @@
 # Mario OTP
 
-A SwiftUI one-time-code screen where verification is a tiny platformer level. Type the 4-digit
-code and Mario runs in, punching each box from below with his signature fist-up jump:
+A SwiftUI one-time-code screen where verification is a tiny platformer level, styled as **Pixel × Paper**:
+keycap digits on warm paper, with Mario as the pixel-art hero. Type the 4-digit code and every key flips
+over into a gold **?** block. Mario then punches each one from below with his signature fist-up jump:
 
-- **Right digit**: the box bumps, turns **green** and pops a coin.
-- **Wrong digit**: the box rattles and turns **red**, and a confused "?" appears over Mario.
-- **All correct**: the boxes slide together into a gold **?-block**. Mario punches it and it turns into a check
-  mark with a ripple and confetti. *Verified successfully.*
-- **Some wrong**: greens stay locked in, reds clear, and you retype only those. Mario then
-  sweeps back across and punches just the boxes you changed.
+- **Right digit**: the key bumps, turns **green** and pops a coin.
+- **Wrong digit**: the key rattles and turns **red**. Mario says so in a speech bubble ("Two are off! Fix 2 and 4").
+- **Some wrong**: greens stay locked in, reds clear, and you retype only those. Mario then sweeps back
+  across and punches just the keys you changed.
+- **All correct**: the keys collapse into a deck and become one gold ?-block. Mario punches it into a big green check
+  key, a fountain of coins bursts out, and an arcade prize ticket slides up with your coins, score and time.
 
 ![Motion preview](docs/choreography-preview.gif)
 
-*The preview is drawn from the real choreography engine's frame data (positions, timing, states).
-Glows and type look nicer in the app itself.*
+*The preview is drawn from the real choreography engine's frame data (positions, timing, states). In the app,
+the type is SF Pro and the shadows are softer. The design mockup is in
+[`docs/concepts/pixel-paper.png`](docs/concepts/pixel-paper.png), and the other directions explored are in
+[`docs/concepts`](docs/concepts).*
 
 ## Run it
 
@@ -32,23 +35,24 @@ cd ~/mario-otp && git fetch origin && git checkout claude/wonderful-rubin-h46qhn
 open, or the newest iPhone Pro. Pass a name to choose: `./scripts/run.sh "iPhone 16"`.
 You can also open `MarioOTP.xcodeproj` in Xcode and press **Run**.
 
-The demo code is shown at the top of the screen (starts as `1985`). Type it, or type something wrong
-first to see the red path.
+The demo code is shown under the keys (starts as `1985`). Type it, or type something wrong first to see
+the red path. The ✕ button starts over, and Continue on the ticket plays again.
 
 To run on a device, choose your team under *Signing & Capabilities*.
-Sounds follow the silent switch. Use the speaker button in the HUD to mute them.
+Sounds follow the silent switch. Use the speaker button at the top right to mute them.
 
 ## Extras beyond the reference
 
 | | |
 |---|---|
 | 8-bit sound effects | Jump, coin, bonk, merge, fanfare and error sounds, synthesised at launch from square, triangle and noise waves (`ChipSounds.swift`). There are no audio files to ship. |
-| Haptics | Light tap per digit, a rigid knock per block hit, success/error notifications. |
-| Retro HUD | Score (+200 per coin, +1000 on verify), coin counter, and "world" that advances on every attempt. |
+| Haptics | A light tap per digit, a rigid knock per key hit, and success/error notifications. |
+| Arcade HUD | A coin counter and a six-digit score: +200 per coin, plus +1000 for verifying on the first try (+500 after that). |
+| Prize ticket | Coins, score and time for the round, a perforated stub ("World 1-N cleared", where N is the attempt count) and a barcode drawn from the serial. |
 | Smart retry | Correct digits lock green; the cursor skips them. |
 | SMS autofill | A hidden `.oneTimeCode` field drives everything, so autofill and paste work. |
 | Resend countdown | "Resend in 0:30". Resending issues a new demo code. |
-| Reduce Motion | No running or jumping. Boxes light up one after another and crossfade to the check. |
+| Reduce Motion | No flipping, running or jumping. Keys light up one after another and crossfade to the check. |
 | VoiceOver | The code field is labelled, and results are announced. |
 
 ## How the animation works
@@ -60,19 +64,21 @@ type 4th digit ─▶ OTPFlowModel.startVerification()
                     ▼
            TimelineView (every frame)                     Task (on cue times)
            StageScene = f(choreography, t)                sounds · haptics · score · headline
-           blocks, coins, Mario, rings, confetti          commit → lock greens / clear reds
+           keys, coins, Mario, speech bubble, rings       commit → lock greens / clear reds / ticket
 ```
 
-- `Stage/Choreography.swift` holds the physics. A bonk takes off as if aiming 35% above the box, stops
+- `Stage/Choreography.swift` holds the physics. A bonk takes off as if aiming 35% above the key, stops
   dead when the fist touches it, and falls back under the same gravity. The hop is timed so the fist touches
-  the underside of each box, under its centre, right on the hit cue.
-- `Stage/StageScene.swift` turns the choreography plus the time into a frame as plain values: bump curves,
-  coin arcs, shake, the merge into the ?-block, rings and confetti.
-- `Stage/StageView.swift` and `OTPBlockView.swift` render the frame. The neon boxes, the gold ?-block face,
-  and the pixel sprites (`Sprites/Sprites.swift`, drawn as text grids) all live here.
+  the underside of each key, under its centre, right on the hit cue.
+- `Stage/StageScene.swift` turns the choreography plus the time into a frame as plain values: the key flip,
+  bump curves, coin arcs, shake, the deck collapse into the ?-block, the coin fountain, and where Mario's
+  speech bubble goes.
+- `Stage/StageView.swift`, `KeycapView.swift` and `SpeechBubble.swift` render the frame. The keycaps, the
+  gold ?-block face, the stepped pixel bubble, and the pixel sprites (`Sprites/Sprites.swift`, drawn as text
+  grids) all live here. `Flow/TicketView.swift` is the prize ticket and the Continue pill.
 
 Tuning knobs: `StageLayout` (sizes, jump headroom), `Choreography` (run speed, merge timing),
-`BonkJump` (jump feel), `Motion` (bump, shake, coin and confetti curves).
+`BonkJump` (jump feel), `Motion` (flip, bump, shake, coin and fountain curves), `Theme` (the palette).
 
 ## Hooking up a real backend
 
@@ -80,7 +86,7 @@ Tuning knobs: `StageLayout` (sizes, jump headroom), `Choreography` (run speed, m
 
 - **Per-digit feedback is for the demo only.** Telling users which digits are right reduces a 4-digit
   code from 10,000 guesses to at most 40. For a real OTP, have the server return pass/fail. Then light all
-  boxes green, or all red, with the same choreography (`targets` with one shared `correct` value).
+  keys green, or all red, with the same choreography (`targets` with one shared `correct` value).
 - The check is synchronous here. With a network call, start Mario's run when the request fires and
   build the hits once the response arrives, or add a short wait before the first bonk.
 

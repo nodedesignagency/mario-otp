@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The blocks, the floor and Mario. While a run plays, the whole stage is redrawn every frame
+/// The keys and Mario. While a run plays, the whole stage is redrawn every frame
 /// from the choreography; otherwise it just reflects what's been typed.
 struct StageView: View {
     let model: OTPFlowModel
@@ -9,7 +9,7 @@ struct StageView: View {
     var body: some View {
         GeometryReader { proxy in
             let layout = StageLayout(width: proxy.size.width)
-            TimelineView(.animation(paused: model.activeRun == nil)) { timeline in
+            TimelineView(.animation(paused: model.activeRun == nil || model.isStageSettled)) { timeline in
                 let time = model.activeRun.map { timeline.date.timeIntervalSince($0.start) } ?? 0
                 StageCanvas(
                     scene: StageScene(input: model.stageInput(time: time, isFocused: isFocused), layout: layout),
@@ -33,98 +33,76 @@ private struct StageCanvas: View {
         ZStack(alignment: .topLeading) {
             ForEach(scene.rings) { ring in
                 RoundedRectangle(cornerRadius: StageLayout.cornerRadius, style: .continuous)
-                    .stroke(Theme.green, lineWidth: 1.5)
+                    .stroke(Theme.green, lineWidth: 2)
                     .frame(width: StageLayout.blockSize, height: StageLayout.blockSize)
                     .scaleEffect(ring.scale)
                     .opacity(ring.opacity)
                     .position(ring.center)
             }
 
-            // Coins sit behind the blocks so they appear to pop out of them.
-            ForEach(scene.coins) { coin in
-                PixelSprite(image: SpriteImage.coin, size: CGSize(width: 16, height: 24))
-                    .scaleEffect(x: coin.spin, y: 1)
-                    .opacity(coin.opacity)
-                    .position(coin.center)
+            // Hit coins rise from behind the keys.
+            ForEach(scene.coins.filter { !$0.popsOut }) { coin in
+                CoinSprite(coin: coin)
             }
 
             ForEach(scene.blocks) { block in
-                OTPBlockView(state: block)
+                KeycapView(state: block)
+                    .scaleEffect(block.scale)
+                    .scaleEffect(x: 1, y: block.flip)
                     .opacity(block.opacity)
                     .offset(block.offset)
                     .position(block.center)
+                    .zIndex(10 + block.zIndex)
             }
 
-            GroundStrip(emphasized: scene.mario != nil)
-                .frame(width: layout.width, height: StageLayout.groundHeight)
-                .position(x: layout.centerX, y: layout.groundY + StageLayout.groundHeight / 2)
-
             if let pose = scene.mario {
+                MarioShadow(lift: pose.lift)
+                    .position(x: pose.x, y: layout.groundY + 1)
+                    .zIndex(19)
                 PixelSprite(image: SpriteImage.mario(pose.frame),
                             size: CGSize(width: StageLayout.marioSize, height: StageLayout.marioSize))
                     .scaleEffect(x: pose.facing == .left ? -1 : 1, y: 1)
                     .position(x: pose.x, y: layout.groundY - StageLayout.marioSize / 2 - pose.lift)
+                    .zIndex(21)
+            }
+
+            if let speech = scene.speech {
+                SpeechBubble(wrongSlots: speech.wrongSlots, tailOnRight: speech.tailOnRight)
+                    .scaleEffect(speech.scale, anchor: speech.tailOnRight ? .bottomTrailing : .bottomLeading)
+                    .position(speech.center)
+                    .zIndex(22)
                     .transition(.opacity)
             }
 
-            if let bubble = scene.bubble {
-                PixelSprite(image: SpriteImage.question, size: CGSize(width: 16, height: 22))
-                    .scaleEffect(bubble.scale)
-                    .opacity(bubble.opacity)
-                    .position(bubble.center)
-            }
-
-            if !scene.confetti.isEmpty {
-                ConfettiLayer(pieces: scene.confetti, layout: layout)
+            // The finale's coin fountain flies in front of everything.
+            ForEach(scene.coins.filter(\.popsOut)) { coin in
+                CoinSprite(coin: coin)
+                    .zIndex(23)
             }
         }
         .frame(width: layout.width, height: StageLayout.height, alignment: .topLeading)
     }
 }
 
-private struct GroundStrip: View {
-    let emphasized: Bool
+private struct CoinSprite: View {
+    let coin: CoinState
 
     var body: some View {
-        Image(decorative: SpriteImage.brick, scale: 0.5)
-            .interpolation(.none)
-            .resizable(resizingMode: .tile)
-            .mask {
-                LinearGradient(
-                    stops: [
-                        .init(color: .clear, location: 0),
-                        .init(color: .black, location: 0.12),
-                        .init(color: .black, location: 0.88),
-                        .init(color: .clear, location: 1),
-                    ],
-                    startPoint: .leading, endPoint: .trailing)
-            }
-            .opacity(emphasized ? 0.9 : 0.28)
-            .animation(.easeOut(duration: 0.4), value: emphasized)
+        PixelSprite(image: SpriteImage.coin, size: CGSize(width: 16, height: 24))
+            .scaleEffect(x: coin.spin, y: 1)
+            .opacity(coin.opacity)
+            .position(coin.center)
     }
 }
 
-/// Pixel confetti. The canvas reaches above the stage so pieces can fly over the headline.
-private struct ConfettiLayer: View {
-    static let overhang: CGFloat = 160
-
-    let pieces: [ConfettiPiece]
-    let layout: StageLayout
+/// A soft spot on the paper that shrinks and fades as Mario leaves the ground.
+private struct MarioShadow: View {
+    let lift: CGFloat
 
     var body: some View {
-        Canvas { context, _ in
-            context.translateBy(x: 0, y: Self.overhang)
-            for piece in pieces {
-                var pieceContext = context
-                pieceContext.translateBy(x: piece.center.x, y: piece.center.y)
-                pieceContext.rotate(by: .radians(piece.rotation))
-                pieceContext.opacity = piece.opacity
-                let rect = CGRect(x: -piece.size / 2, y: -piece.size / 2, width: piece.size, height: piece.size)
-                pieceContext.fill(Path(rect), with: .color(Theme.confetti[piece.palette % Theme.confetti.count]))
-            }
-        }
-        .frame(width: layout.width, height: StageLayout.height + Self.overhang)
-        .position(x: layout.centerX, y: (StageLayout.height - Self.overhang) / 2)
-        .allowsHitTesting(false)
+        let height = min(lift / 150, 0.6)
+        Ellipse()
+            .fill(Theme.shadow.opacity(0.13 * (1 - height)))
+            .frame(width: 34 * (1 - height * 0.7), height: 8)
     }
 }

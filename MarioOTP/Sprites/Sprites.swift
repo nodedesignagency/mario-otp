@@ -147,6 +147,15 @@ enum Sprites {
         "....KK..",
     ], palette: ["W": 0xFFFFFF, "K": 0x281604])
 
+    /// Speech-bubble tail pointing down and right. Its top row sits on the bubble's bottom border and opens it.
+    static let bubbleTail = PixelArt(rows: [
+        "KWWWK",
+        ".KWWK",
+        "..KWK",
+        "...KK",
+        "....K",
+    ], palette: ["K": 0x1C1D26, "W": 0xFFFFFF])
+
     static let brick = PixelArt(rows: [
         "LLLLLLLM",
         "LooooooM",
@@ -158,5 +167,5 @@ enum Sprites {
         "MMMMMMMM",
     ], palette: ["L": 0xE8824A, "o": 0xB4531E, "M": 0x3A1A0A])
 
-    static var all: [PixelArt] { [marioStand, marioJump, coin, question, brick] + marioRun }
+    static var all: [PixelArt] { [marioStand, marioJump, coin, question, bubbleTail, brick] + marioRun }
 }
