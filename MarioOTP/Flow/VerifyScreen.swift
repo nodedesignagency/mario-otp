@@ -177,7 +177,7 @@ private struct FooterView: View {
 private struct CheckingLabel: View {
     var body: some View {
         TimelineView(.periodic(from: .now, by: 0.35)) { context in
-            let dots = Int(context.date.timeIntervalSinceReferenceDate / 0.35) % 3 + 1
+            let dots = abs(Int(context.date.timeIntervalSinceReferenceDate / 0.35)) % 3 + 1
             HStack(spacing: 4) {
                 Text("Checking")
                     .foregroundStyle(Theme.ink2)
