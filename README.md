@@ -11,8 +11,9 @@ over into a gold **?** block. Mario then punches each one from below with his si
   across and punches just the keys you changed.
 - **All correct**: the keys collapse into a deck and become one gold ?-block. Mario punches it into a big green check
   key, and a fountain of coins bursts out. Then, like the end of a level, a brick castle rises at the end of the road,
-  Princess Peach walks out to meet him, a heart pops, and a retro dialog box types out her line:
-  *"Thank you, Mario! Your number is verified."*
+  Princess Peach hurries out to meet him, a heart pops, and a retro dialog box types out one of her lines, like
+  *"Right castle, Mario! Your code checks out. Let's-a go!"*, or a cheekier one (*"Took a few castles… …but your
+  code checks out!"*) if you needed a retry. The lines are in `Flow/PrincessDialog.swift`.
 
 ![Motion preview](docs/choreography-preview.gif)
 

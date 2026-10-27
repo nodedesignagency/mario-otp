@@ -200,11 +200,11 @@ extension Choreography {
             track.stand(for: 0.15)
             outcome = .verified(mergeStart: mergeStart, reveal: reveal)
 
-            // Thank you, Mario! A castle rises at the end of the road and the princess walks over.
+            // A castle rises at the end of the road and the princess hurries over during the victory hop.
             let entrance = PrincessEntrance.walking(to: track.x, layout: layout,
-                                                    castleAt: reveal + 0.35, appearAt: track.time)
+                                                    castleAt: reveal + 0.25, appearAt: reveal + 0.55)
             track.cue(.castle, at: entrance.castleAt)
-            track.stand(until: entrance.arriveAt - 0.3)
+            track.stand(until: entrance.arriveAt - 0.2)
             track.face(Facing(toward: entrance.toX, from: track.x))
             track.stand(until: entrance.arriveAt + 0.25)
             track.cue(.princess, at: entrance.arriveAt)
@@ -284,11 +284,11 @@ struct PrincessPose: Equatable {
 /// The princess walks out of a castle at the end of the road and stops beside Mario.
 /// She always comes from the right, so she always faces left, towards him.
 struct PrincessEntrance: Equatable {
-    static let walkSpeed: CGFloat = 85
-    static let strideLength: CGFloat = 7
+    static let walkSpeed: CGFloat = 150
+    static let strideLength: CGFloat = 8
     /// How far to Mario's right she stops.
     static let standOff: CGFloat = 46
-    static let castleRise = 0.45
+    static let castleRise = 0.35
 
     var castleAt: Double
     var appearAt: Double

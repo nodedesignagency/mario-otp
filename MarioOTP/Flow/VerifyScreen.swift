@@ -31,7 +31,8 @@ struct VerifyScreen: View {
 
                 ZStack {
                     if isVerified {
-                        PrincessDialog(startedAt: model.dialogStartedAt)
+                        PrincessDialog(quip: model.quip, startedAt: model.dialogStartedAt,
+                                       isComplete: model.isDialogComplete)
                             .padding(.horizontal, 24)
                             .transition(.opacity)
                     } else {

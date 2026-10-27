@@ -68,6 +68,8 @@ final class OTPFlowModel {
     private(set) var isStageSettled = false
     /// When the princess started typing her line, once she's reached Mario.
     private(set) var dialogStartedAt: Date?
+    private(set) var isDialogComplete = false
+    private(set) var quip = PrincessQuip.firstTry[0]
 
     /// Reported by the stage once it knows its width.
     @ObservationIgnored var layout: StageLayout?
@@ -75,6 +77,8 @@ final class OTPFlowModel {
     private let feedback: Feedback
     @ObservationIgnored private var playback: Task<Void, Never>?
     @ObservationIgnored private var typing: Task<Void, Never>?
+    /// Wrong attempts this round, so the princess can tease you about them.
+    @ObservationIgnored private var misses = 0
 
     init() {
         feedback = Feedback()
@@ -157,6 +161,8 @@ final class OTPFlowModel {
         locked = []
         speech = nil
         dialogStartedAt = nil
+        isDialogComplete = false
+        misses = 0
         typing?.cancel()
     }
 
@@ -208,6 +214,8 @@ final class OTPFlowModel {
             feedback.merge()
         case .reveal:
             feedback.reveal()
+            // Chosen now so the dialog box reserves the right size before she arrives.
+            quip = PrincessQuip.pick(afterMisses: misses)
             withAnimation(.spring(response: 0.6, dampingFraction: 0.9)) {
                 headline = .verified
             }
@@ -222,7 +230,7 @@ final class OTPFlowModel {
                 dialogStartedAt = Date()
             }
             typeOutPrincessLine()
-            AccessibilityNotification.Announcement(PrincessLine.full).post()
+            AccessibilityNotification.Announcement(quip.full).post()
         case .reject:
             feedback.reject()
             headline = .retry
@@ -237,12 +245,14 @@ final class OTPFlowModel {
     /// A blip every other letter while the dialog box types her line.
     private func typeOutPrincessLine() {
         typing?.cancel()
+        let letters = quip.full.count
         typing = Task { [weak self] in
-            for index in 0..<PrincessLine.full.count {
-                try? await Task.sleep(for: .seconds(PrincessLine.characterDelay))
+            for index in 0..<letters {
+                try? await Task.sleep(for: .seconds(PrincessQuip.characterDelay))
                 guard !Task.isCancelled else { return }
                 if index % 2 == 0 { self?.feedback.blip() }
             }
+            self?.isDialogComplete = true
         }
     }
 
@@ -258,6 +268,7 @@ final class OTPFlowModel {
             }
             return
         }
+        misses += 1
         withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
             for hit in choreography.hits {
                 if hit.correct {
