@@ -42,9 +42,6 @@ enum Theme {
     static let keySkirt = Color(hex: 0xE8E3D8)
     static let keyFaceTop = Color.white
     static let keyFaceBottom = Color(hex: 0xF8F6F1)
-
-    static let pillTop = Color(hex: 0x2C2E3B)
-    static let pillBottom = Color(hex: 0x15161E)
 }
 
 extension View {

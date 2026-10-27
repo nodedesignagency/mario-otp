@@ -10,7 +10,7 @@ over into a gold **?** block. Mario then punches each one from below with his si
 - **Some wrong**: greens stay locked in, reds clear, and you retype only those. Mario then sweeps back
   across and punches just the keys you changed.
 - **All correct**: the keys collapse into a deck and become one gold ?-block. Mario punches it into a big green check
-  key, a fountain of coins bursts out, and an arcade prize ticket slides up with your coins, score and time.
+  key, and a fountain of coins bursts out. *Verified.*
 
 ![Motion preview](docs/choreography-preview.gif)
 
@@ -37,7 +37,7 @@ open, or the newest iPhone Pro. Pass a name to choose: `./scripts/run.sh "iPhone
 You can also open `MarioOTP.xcodeproj` in Xcode and press **Run**.
 
 The demo code is shown under the keys (starts as `1985`). Type it, or type something wrong first to see
-the red path. The ✕ button starts over, and Continue on the ticket plays again.
+the red path. The ✕ button starts over.
 
 To run on a device, choose your team under *Signing & Capabilities*.
 Sounds follow the silent switch. Use the speaker button at the top right to mute them.
@@ -48,8 +48,6 @@ Sounds follow the silent switch. Use the speaker button at the top right to mute
 |---|---|
 | 8-bit sound effects | Jump, coin, bonk, merge, fanfare and error sounds, synthesised at launch from square, triangle and noise waves (`ChipSounds.swift`). There are no audio files to ship. |
 | Haptics | A light tap per digit, a rigid knock per key hit, and success/error notifications. |
-| Arcade HUD | A coin counter and a six-digit score: +200 per coin, plus +1000 for verifying on the first try (+500 after that). |
-| Prize ticket | Coins, score and time for the round, a perforated stub ("World 1-N cleared", where N is the attempt count) and a barcode drawn from the serial. |
 | Smart retry | Correct digits lock green; the cursor skips them. |
 | SMS autofill | A hidden `.oneTimeCode` field drives everything, so autofill and paste work. |
 | Resend countdown | "Resend in 0:30". Resending issues a new demo code. |
@@ -64,8 +62,8 @@ type 4th digit ─▶ OTPFlowModel.startVerification()
                     │  every hit time, and the ending, all worked out before anything moves
                     ▼
            TimelineView (every frame)                     Task (on cue times)
-           StageScene = f(choreography, t)                sounds · haptics · score · headline
-           keys, coins, Mario, speech bubble, rings       commit → lock greens / clear reds / ticket
+           StageScene = f(choreography, t)                sounds · haptics · headline
+           keys, coins, Mario, speech bubble, rings       commit → lock greens / clear reds
 ```
 
 - `Stage/Choreography.swift` holds the physics. A bonk takes off as if aiming 35% above the key, stops
@@ -76,7 +74,7 @@ type 4th digit ─▶ OTPFlowModel.startVerification()
   speech bubble goes.
 - `Stage/StageView.swift`, `KeycapView.swift` and `SpeechBubble.swift` render the frame. The keycaps, the
   gold ?-block face, the stepped pixel bubble, and the pixel sprites (`Sprites/Sprites.swift`, drawn as text
-  grids) all live here. `Flow/TicketView.swift` is the prize ticket and the Continue pill.
+  grids) all live here.
 
 Tuning knobs: `StageLayout` (sizes, jump headroom), `Choreography` (run speed, merge timing),
 `BonkJump` (jump feel), `Motion` (flip, bump, shake, coin and fountain curves), `Theme` (the palette).

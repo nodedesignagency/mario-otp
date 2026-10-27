@@ -10,7 +10,7 @@ struct VerifyScreen: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            TopBar(coins: model.coins, score: model.score, isMuted: model.isMuted,
+            TopBar(isMuted: model.isMuted,
                    onClose: { startOver() },
                    onToggleMute: { model.toggleMute() })
                 .padding(.horizontal, 20)
@@ -41,20 +41,7 @@ struct VerifyScreen: View {
             .padding(.top, 6)
             .animation(.easeOut(duration: 0.25), value: isVerified)
 
-            Spacer(minLength: 12)
-
-            ZStack(alignment: .bottom) {
-                if let result = model.result {
-                    VStack(spacing: 18) {
-                        TicketView(result: result)
-                        ContinueButton { startOver() }
-                    }
-                    .padding(.horizontal, 22)
-                    .padding(.bottom, 10)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-                }
-            }
-            .animation(.spring(response: 0.5, dampingFraction: 0.85), value: model.result)
+            Spacer(minLength: 0)
         }
         .background { codeField }
         .background { PaperBackground().ignoresSafeArea() }

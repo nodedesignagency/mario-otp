@@ -37,15 +37,6 @@ enum CodeVerifier {
     }
 }
 
-/// What the ticket shows once a code is verified.
-struct RoundResult: Equatable {
-    var coins: Int
-    var score: Int
-    var duration: TimeInterval
-    var attempts: Int
-    var serial: String
-}
-
 @MainActor
 @Observable
 final class OTPFlowModel {
@@ -71,11 +62,8 @@ final class OTPFlowModel {
     /// Slots Mario is pointing at after a miss, until you start typing again.
     private(set) var speech: [Int]?
     private(set) var demoCode = "1985"
-    private(set) var score = 0
-    private(set) var coins = 0
     private(set) var isMuted = false
     private(set) var resendAvailableAt = Date().addingTimeInterval(OTPFlowModel.resendCooldown)
-    private(set) var result: RoundResult?
     /// The finale has finished moving, so the stage can stop redrawing every frame.
     private(set) var isStageSettled = false
 
@@ -84,11 +72,6 @@ final class OTPFlowModel {
     @ObservationIgnored var reduceMotion = false
     private let feedback: Feedback
     @ObservationIgnored private var playback: Task<Void, Never>?
-    @ObservationIgnored private var round = 1
-    @ObservationIgnored private var roundStartedAt: Date?
-    @ObservationIgnored private var roundCoins = 0
-    @ObservationIgnored private var roundScore = 0
-    @ObservationIgnored private var attempts = 0
 
     init() {
         feedback = Feedback()
@@ -129,7 +112,6 @@ final class OTPFlowModel {
         digits = next
         if grew {
             feedback.keyTap()
-            if roundStartedAt == nil { roundStartedAt = Date() }
             if speech != nil {
                 withAnimation(.easeOut(duration: 0.2)) { speech = nil }
             }
@@ -164,7 +146,6 @@ final class OTPFlowModel {
             phase = .entering
             headline = .prompt
         }
-        round += 1
         resendAvailableAt = Date().addingTimeInterval(Self.resendCooldown)
     }
 
@@ -172,11 +153,6 @@ final class OTPFlowModel {
         digits = Array(repeating: nil, count: Self.codeLength)
         locked = []
         speech = nil
-        result = nil
-        roundStartedAt = nil
-        roundCoins = 0
-        roundScore = 0
-        attempts = 0
     }
 
     // MARK: - The run
@@ -191,7 +167,6 @@ final class OTPFlowModel {
         let choreography = Choreography.make(layout: layout, targets: targets,
                                              mario: restingMario, reducedMotion: reduceMotion)
         let start = Date()
-        attempts += 1
         speech = nil
         isStageSettled = false
         phase = .checking
@@ -221,12 +196,6 @@ final class OTPFlowModel {
         case let .hit(_, correct):
             if correct {
                 feedback.coin()
-                roundCoins += 1
-                roundScore += 200
-                withAnimation(.snappy) {
-                    coins += 1
-                    score += 200
-                }
             } else {
                 feedback.dud()
             }
@@ -234,12 +203,7 @@ final class OTPFlowModel {
             feedback.merge()
         case .reveal:
             feedback.reveal()
-            let bonus = attempts == 1 ? 1000 : 500
-            roundScore += bonus
-            withAnimation(.snappy) {
-                score += bonus
-                headline = .verified
-            }
+            headline = .verified
             AccessibilityNotification.Announcement(headline.title).post()
         case .hop:
             feedback.hop()
@@ -257,9 +221,6 @@ final class OTPFlowModel {
     private func commit(_ choreography: Choreography) {
         restingMario = choreography.marioEnd
         if choreography.succeeds {
-            let duration = roundStartedAt.map { Date().timeIntervalSince($0) } ?? choreography.commitTime
-            result = RoundResult(coins: roundCoins, score: roundScore, duration: duration, attempts: attempts,
-                                 serial: "\(demoCode)-\(String(format: "%04d", round))")
             // Keep the run alive so the check key stays on stage, and let the rings finish before pausing.
             phase = .verified
             playback = Task { [weak self] in
