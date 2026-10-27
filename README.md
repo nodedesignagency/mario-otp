@@ -1,7 +1,8 @@
 # Mario OTP
 
 A SwiftUI one-time-code screen where verification is a tiny platformer level, styled as **Pixel × Paper**:
-keycap digits on warm paper, with Mario as the pixel-art hero. Type the 4-digit code and every key flips
+keycap digits on warm paper, with Mario as the pixel-art hero running along a 1-1 brick road. The key you're
+typing into lifts slightly and shows a blinking pixel cursor. Type the 4-digit code and every key flips
 over into a gold **?** block. Mario then punches each one from below with his signature fist-up jump:
 
 - **Right digit**: the key bumps, turns **green** and pops a coin.
@@ -14,7 +15,7 @@ over into a gold **?** block. Mario then punches each one from below with his si
 ![Motion preview](docs/choreography-preview.gif)
 
 *The preview is drawn from the real choreography engine's frame data (positions, timing, states). In the app,
-the type is SF Pro and the shadows are softer. The design mockup is in
+the type is SF Pro. The design mockup is in
 [`docs/concepts/pixel-paper.png`](docs/concepts/pixel-paper.png), and the other directions explored are in
 [`docs/concepts`](docs/concepts).*
 

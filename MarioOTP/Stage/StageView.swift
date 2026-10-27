@@ -55,10 +55,12 @@ private struct StageCanvas: View {
                     .zIndex(10 + block.zIndex)
             }
 
+            BrickRoad()
+                .frame(width: layout.width, height: StageLayout.groundHeight)
+                .position(x: layout.centerX, y: layout.groundY + StageLayout.groundHeight / 2)
+                .zIndex(19)
+
             if let pose = scene.mario {
-                MarioShadow(lift: pose.lift)
-                    .position(x: pose.x, y: layout.groundY + 1)
-                    .zIndex(19)
                 PixelSprite(image: SpriteImage.mario(pose.frame),
                             size: CGSize(width: StageLayout.marioSize, height: StageLayout.marioSize))
                     .scaleEffect(x: pose.facing == .left ? -1 : 1, y: 1)
@@ -95,14 +97,23 @@ private struct CoinSprite: View {
     }
 }
 
-/// A soft spot on the paper that shrinks and fades as Mario leaves the ground.
-private struct MarioShadow: View {
-    let lift: CGFloat
-
+/// The 1-1 brick road, tiled at 2pt per pixel and faded out at both ends so it melts into the paper.
+private struct BrickRoad: View {
     var body: some View {
-        let height = min(lift / 150, 0.6)
-        Ellipse()
-            .fill(Theme.shadow.opacity(0.13 * (1 - height)))
-            .frame(width: 34 * (1 - height * 0.7), height: 8)
+        Image(decorative: SpriteImage.brick, scale: 0.5)
+            .interpolation(.none)
+            .resizable(resizingMode: .tile)
+            .mask {
+                LinearGradient(
+                    stops: [
+                        .init(color: .clear, location: 0),
+                        .init(color: .black, location: 0.1),
+                        .init(color: .black, location: 0.9),
+                        .init(color: .clear, location: 1),
+                    ],
+                    startPoint: .leading, endPoint: .trailing)
+            }
+            .opacity(0.9)
+            .allowsHitTesting(false)
     }
 }

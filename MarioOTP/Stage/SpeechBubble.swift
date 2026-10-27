@@ -39,7 +39,7 @@ struct SpeechBubble: View {
                 .offset(x: tailOnRight ? -22 : 22, y: 12)
         }
         .compositingGroup()
-        .shadow(color: Theme.shadow.opacity(0.14), radius: 8, x: 0, y: 5)
+        .softShadow(contact: 0.04, ambient: 0.06, radius: 10, y: 4)
         .accessibilityElement(children: .combine)
     }
 

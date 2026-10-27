@@ -46,7 +46,7 @@ struct TicketView: View {
         }
         .background(shape.fill(Theme.card))
         .overlay(shape.stroke(Theme.line, lineWidth: 1))
-        .shadow(color: Theme.shadow.opacity(0.16), radius: 14, x: 0, y: 10)
+        .softShadow(contact: 0.04, ambient: 0.07, radius: 18, y: 8)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Verified in \(Self.clock(result.duration)). \(result.coins) coins, \(result.score) points.")
     }
@@ -167,7 +167,7 @@ struct ContinueButton: View {
                                                       startPoint: .top, endPoint: .bottom)))
             .overlay(Capsule().strokeBorder(LinearGradient(colors: [.white.opacity(0.2), .clear],
                                                            startPoint: .top, endPoint: .center), lineWidth: 1))
-            .shadow(color: Theme.pillBottom.opacity(0.35), radius: 12, x: 0, y: 8)
+            .softShadow(Theme.pillBottom, contact: 0.10, ambient: 0.14, radius: 14, y: 6)
         }
         .buttonStyle(PressableStyle())
     }

@@ -40,8 +40,8 @@ struct KeycapView: View {
             .animation(.spring(response: 0.32, dampingFraction: 0.7), value: state.glyph)
 
             if state.tone == .active {
-                Caret()
-                    .offset(y: Keycap.faceCenterOffset)
+                PixelCursor()
+                    .offset(y: Keycap.faceCenterOffset + 11)
             }
 
             Keycap.faceShape
@@ -50,14 +50,9 @@ struct KeycapView: View {
                 .opacity(state.flash * 0.6)
         }
         .frame(width: StageLayout.blockSize, height: StageLayout.blockSize)
-        .overlay {
-            // Focus ring with a sliver of paper between it and the key.
-            RoundedRectangle(cornerRadius: StageLayout.cornerRadius + 5.5, style: .continuous)
-                .strokeBorder(Theme.blue, lineWidth: 2.5)
-                .padding(-5.5)
-                .opacity(state.tone == .active ? 1 : 0)
-                .animation(.easeOut(duration: 0.18), value: state.tone)
-        }
+        // The key you're typing into rises a little, like it's waiting to be pressed.
+        .offset(y: state.tone == .active ? -2 : 0)
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: state.tone == .active)
     }
 }
 
@@ -77,7 +72,7 @@ private struct KeycapBody: View {
         let skirt = RoundedRectangle(cornerRadius: StageLayout.cornerRadius, style: .continuous)
         ZStack {
             skirt.fill(style.skirt)
-            skirt.strokeBorder(Theme.ink.opacity(style.edge), lineWidth: 1)
+            skirt.strokeBorder(Theme.ink.opacity(style.edge), lineWidth: 0.75)
             ZStack {
                 Keycap.faceShape
                     .fill(LinearGradient(colors: [style.faceTop, style.faceBottom], startPoint: .top, endPoint: .bottom))
@@ -88,11 +83,11 @@ private struct KeycapBody: View {
                     Rivets()
                 }
             }
-            .shadow(color: Theme.ink.opacity(0.08), radius: 0, x: 0, y: 1)
+            .shadow(color: Theme.ink.opacity(0.04), radius: 0.5, x: 0, y: 0.5)
             .padding(Keycap.faceInsets)
         }
         .compositingGroup()
-        .shadow(color: style.dropShadow, radius: 7, x: 0, y: 6)
+        .softShadow(style.shadowTint, contact: 0.05, ambient: style.ambient, radius: 10, y: 5)
     }
 }
 
@@ -119,9 +114,10 @@ private struct KeycapStyle {
     var faceBottom = Theme.keyFaceBottom
     var ink = Theme.ink
     var inkShadow = Color.clear
-    var edge = 0.10
+    var edge = 0.06
     var rivets = false
-    var dropShadow = Theme.shadow.opacity(0.16)
+    var shadowTint = Theme.shadow
+    var ambient = 0.07
 
     static let questionBlock = KeycapStyle(BlockState(id: 0, center: .zero, tone: .pending, glyph: .blank))
 
@@ -134,31 +130,35 @@ private struct KeycapStyle {
             faceTop = Theme.goldLight
             faceBottom = Theme.gold
             ink = .white
-            inkShadow = Theme.goldInk.opacity(0.6)
+            inkShadow = Theme.goldInk.opacity(0.35)
             edge = 0
             rivets = true
-            dropShadow = Theme.goldSkirt.opacity(0.35)
+            shadowTint = Theme.goldSkirt
+            ambient = 0.14
         case .correct where state.isHero:
             skirt = Theme.greenSkirt
             faceTop = Theme.greenLight
             faceBottom = Theme.green
             ink = .white
             edge = 0
-            dropShadow = Theme.greenSkirt.opacity(0.45)
+            shadowTint = Theme.greenSkirt
+            ambient = 0.16
         case .correct:
             skirt = Theme.greenSkirt
             faceTop = Theme.greenFaceTop
             faceBottom = Theme.greenFace
             ink = Theme.greenSkirt
             edge = 0
-            dropShadow = Theme.greenSkirt.opacity(0.22)
+            shadowTint = Theme.greenSkirt
+            ambient = 0.09
         case .wrong:
             skirt = Theme.redSkirt
             faceTop = Theme.redFaceTop
             faceBottom = Theme.redFace
             ink = Theme.redSkirt
             edge = 0
-            dropShadow = Theme.redSkirt.opacity(0.22)
+            shadowTint = Theme.redSkirt
+            ambient = 0.09
         }
     }
 }
@@ -173,15 +173,15 @@ private struct CheckmarkShape: Shape {
     }
 }
 
-private struct Caret: View {
+/// An old-terminal underscore that blinks hard on and off instead of fading.
+private struct PixelCursor: View {
     var body: some View {
-        Capsule()
-            .fill(Theme.blue)
-            .frame(width: 3, height: 26)
-            .phaseAnimator([1.0, 0.15]) { content, opacity in
-                content.opacity(opacity)
-            } animation: { _ in
-                .easeInOut(duration: 0.55)
-            }
+        TimelineView(.periodic(from: .now, by: 0.5)) { context in
+            let visible = abs(Int(context.date.timeIntervalSinceReferenceDate * 2)) % 2 == 0
+            Rectangle()
+                .fill(Theme.ink)
+                .frame(width: 18, height: 4)
+                .opacity(visible ? 1 : 0)
+        }
     }
 }

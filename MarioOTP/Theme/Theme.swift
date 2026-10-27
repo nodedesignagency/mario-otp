@@ -22,8 +22,6 @@ enum Theme {
     /// Warm brown used for shadows, so they sit on the paper instead of greying it.
     static let shadow = Color(hex: 0x3C2A0A)
 
-    static let blue = Color(hex: 0x3D6BFF)
-
     static let gold = Color(hex: 0xFFC234)
     static let goldLight = Color(hex: 0xFFE37E)
     static let goldSkirt = Color(hex: 0xD6950F)
@@ -41,10 +39,20 @@ enum Theme {
     static let redFace = Color(hex: 0xFDE2DB)
     static let redFaceTop = Color(hex: 0xFFF2EE)
 
-    static let keySkirt = Color(hex: 0xE3DDD0)
+    static let keySkirt = Color(hex: 0xE8E3D8)
     static let keyFaceTop = Color.white
     static let keyFaceBottom = Color(hex: 0xF8F6F1)
 
     static let pillTop = Color(hex: 0x2C2E3B)
     static let pillBottom = Color(hex: 0x15161E)
+}
+
+extension View {
+    /// Two gentle layers instead of one hard drop: a faint contact shadow right under the edge,
+    /// and a wide, light ambient one.
+    func softShadow(_ color: Color = Theme.shadow, contact: Double = 0.04, ambient: Double = 0.06,
+                    radius: CGFloat = 12, y: CGFloat = 5) -> some View {
+        shadow(color: color.opacity(contact), radius: 1, x: 0, y: 1)
+            .shadow(color: color.opacity(ambient), radius: radius, x: 0, y: y)
+    }
 }

@@ -13,9 +13,9 @@ struct StageLayout: Equatable {
     static let headroom: CGFloat = 60
     static let marioPixel: CGFloat = 3
     static let marioSize: CGFloat = 16 * marioPixel
-    /// Room under Mario's feet for his shadow.
-    static let floorInset: CGFloat = 12
-    static let height: CGFloat = topInset + blockSize + headroom + marioSize + floorInset
+    /// The brick road Mario runs on.
+    static let groundHeight: CGFloat = 16
+    static let height: CGFloat = topInset + blockSize + headroom + marioSize + groundHeight
     static let bubbleSize = CGSize(width: 196, height: 62)
 
     var width: CGFloat
@@ -25,7 +25,7 @@ struct StageLayout: Equatable {
     var blockTop: CGFloat { Self.topInset }
     var blockBottom: CGFloat { Self.topInset + Self.blockSize }
     var blockCenterY: CGFloat { Self.topInset + Self.blockSize / 2 }
-    /// Where Mario's feet are.
+    /// Top of the road, where Mario's feet are.
     var groundY: CGFloat { blockBottom + Self.headroom + Self.marioSize }
 
     /// Where Mario waits before his first run: at the take-off point for the first key.

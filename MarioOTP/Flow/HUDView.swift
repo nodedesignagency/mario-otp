@@ -43,7 +43,7 @@ private struct ScorePill: View {
         .frame(height: 42)
         .background(Capsule().fill(Theme.card))
         .overlay(Capsule().strokeBorder(Theme.line))
-        .shadow(color: Theme.shadow.opacity(0.06), radius: 2, x: 0, y: 1)
+        .softShadow(contact: 0.03, ambient: 0.04, radius: 6, y: 2)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(coins) coins, \(score) points")
     }
@@ -70,7 +70,7 @@ struct RoundButton: View {
                 .frame(width: 42, height: 42)
                 .background(Circle().fill(Theme.card))
                 .overlay(Circle().strokeBorder(Theme.line))
-                .shadow(color: Theme.shadow.opacity(0.06), radius: 2, x: 0, y: 1)
+                .softShadow(contact: 0.03, ambient: 0.04, radius: 6, y: 2)
                 .contentTransition(.symbolEffect(.replace))
         }
         .buttonStyle(PressableStyle())

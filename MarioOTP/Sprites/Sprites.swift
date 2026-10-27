@@ -156,5 +156,17 @@ enum Sprites {
         "....K",
     ], palette: ["K": 0x1C1D26, "W": 0xFFFFFF])
 
-    static var all: [PixelArt] { [marioStand, marioJump, coin, question, bubbleTail] + marioRun }
+    /// One tile of the brick road.
+    static let brick = PixelArt(rows: [
+        "LLLLLLLM",
+        "LooooooM",
+        "LooooooM",
+        "MMMMMMMM",
+        "LLLMLLLL",
+        "oooMLooo",
+        "oooMLooo",
+        "MMMMMMMM",
+    ], palette: ["L": 0xE8824A, "o": 0xB4531E, "M": 0x5A2A10])
+
+    static var all: [PixelArt] { [marioStand, marioJump, coin, question, bubbleTail, brick] + marioRun }
 }
